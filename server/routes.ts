@@ -6,15 +6,12 @@ import { eq } from "drizzle-orm";
 import { setupAuth } from "./auth";
 
 // Extend Express Request type for authenticated routes
-interface AuthenticatedRequest extends Omit<Request, "user"> {
+interface AuthenticatedRequest extends Request {
   user?: User;
   isAuthenticated(): boolean;
 }
 
 export function registerRoutes(app: Express): Server {
-  // Setup authentication routes first
-  setupAuth(app);
-
   // Create HTTP server
   const httpServer = createServer(app);
 
@@ -80,6 +77,50 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating booking:", error);
       res.status(500).json({ error: "Failed to create booking" });
+    }
+  });
+
+  app.get("/api/bookings", async (req: AuthenticatedRequest, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const userBookings = await db.query.bookings.findMany({
+        where: eq(bookings.userId, req.user.id),
+        with: {
+          yacht: true,
+        },
+      });
+
+      res.json(userBookings);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
+  // Review routes
+  app.post("/api/reviews", async (req: AuthenticatedRequest, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { yachtId, rating, comment } = req.body;
+      const [review] = await db.insert(reviews)
+        .values({
+          userId: req.user.id,
+          yachtId,
+          rating,
+          comment,
+        })
+        .returning();
+
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(500).json({ error: "Failed to create review" });
     }
   });
 

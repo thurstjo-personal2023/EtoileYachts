@@ -1,15 +1,15 @@
 import { Switch, Route } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useUser } from "./hooks/use-user";
+import { useUser } from "@/hooks/use-user";
 import { Toaster } from "@/components/ui/toaster";
 
 // Pages
-import HomePage from "./pages/HomePage";
-import AuthPage from "./pages/AuthPage";
-import YachtListingPage from "./pages/YachtListingPage";
-import YachtDetailPage from "./pages/YachtDetailPage";
-import BookingPage from "./pages/BookingPage";
+import HomePage from "@/pages/HomePage";
+import AuthPage from "@/pages/AuthPage";
+import YachtListingPage from "@/pages/YachtListingPage";
+import YachtDetailPage from "@/pages/YachtDetailPage";
+import BookingPage from "@/pages/BookingPage";
 
 function App() {
   const { user, isLoading } = useUser();
