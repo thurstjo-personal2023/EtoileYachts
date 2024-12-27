@@ -1,8 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
 import { db } from "@db";
-import { yachts, bookings, reviews, users } from "@db/schema";
+import { yachts, bookings, reviews } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { WebSocket, WebSocketServer } from "ws";
 import type { IncomingMessage } from "http";
@@ -19,8 +18,6 @@ interface AuthenticatedRequest extends Request {
 }
 
 export function registerRoutes(app: Express): Server {
-  setupAuth(app);
-
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ 
     server: httpServer,
