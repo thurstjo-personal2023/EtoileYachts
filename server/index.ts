@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup authentication
+  // Setup authentication first
   setupAuth(app);
 
   // Register API routes and get HTTP server
@@ -55,14 +55,12 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
   });
 
-  // Setup Vite or serve static files
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // Start server
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running on port ${PORT}`);

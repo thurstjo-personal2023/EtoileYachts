@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { yachts, bookings, reviews } from "@db/schema";
@@ -14,24 +14,25 @@ interface AuthenticatedRequest extends Request {
     email: string;
     role: string;
   };
-  isAuthenticated(): boolean;
 }
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
+
+  // Create WebSocket server
   const wss = new WebSocketServer({ 
-    server: httpServer,
+    server: httpServer, // Use server instead of noServer to automatically handle upgrades
+    path: "/ws", // Specify explicit path for WebSocket connections
     verifyClient: ({ req }: { req: IncomingMessage }) => {
-      // Skip vite HMR connections
-      if (req.headers['sec-websocket-protocol'] === 'vite-hmr') {
-        return false;
-      }
-      return true;
+      // Only handle our application WebSocket connections
+      return !req.headers['sec-websocket-protocol']?.includes('vite-hmr');
     }
   });
 
   // WebSocket handling for real-time updates
   wss.on("connection", (ws: WebSocket) => {
+    console.log("New WebSocket connection established");
+
     ws.on("message", (message: Buffer) => {
       try {
         // Broadcast updates to all connected clients
@@ -90,8 +91,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Booking routes
-  app.post("/api/bookings", async (req: AuthenticatedRequest, res) => {
-    if (!req.isAuthenticated() || !req.user) {
+  app.post("/api/bookings", async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -116,8 +117,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/bookings", async (req: AuthenticatedRequest, res) => {
-    if (!req.isAuthenticated() || !req.user) {
+  app.get("/api/bookings", async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -137,8 +138,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Review routes
-  app.post("/api/reviews", async (req: AuthenticatedRequest, res) => {
-    if (!req.isAuthenticated() || !req.user) {
+  app.post("/api/reviews", async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
