@@ -10,8 +10,8 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   fullName: text("full_name").notNull(),
   userType: text("user_type", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
-  role: text("role", { 
-    enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor"] 
+  role: text("role", {
+    enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor"]
   }),
 
   // Basic Information
@@ -125,8 +125,8 @@ export const users = pgTable("users", {
     reviewsVisibility: "public"
   }),
 
-  verificationStatus: text("verification_status", { 
-    enum: ["unverified", "pending", "verified", "rejected"] 
+  verificationStatus: text("verification_status", {
+    enum: ["unverified", "pending", "verified", "rejected"]
   }).default("unverified"),
 
   createdAt: timestamp("created_at").defaultNow(),
@@ -144,6 +144,20 @@ export const vessels = pgTable("vessels", {
   year: integer("year"),
   length: decimal("length", { precision: 5, scale: 2 }),
   capacity: integer("capacity"),
+
+  // Enhanced features field
+  features: jsonb("features").$type<{
+    hasSpa: boolean;
+    hasDiningArea: boolean;
+    hasChildFriendlyAmenities: boolean;
+    additionalFeatures: string[];
+  }>().default({
+    hasSpa: false,
+    hasDiningArea: false,
+    hasChildFriendlyAmenities: false,
+    additionalFeatures: []
+  }),
+
   registration: jsonb("registration").$type<{
     number: string;
     country: string;
@@ -195,6 +209,39 @@ export const services = pgTable("services", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   type: text("type").notNull(),
+
+  // Enhanced activity details
+  activityDetails: jsonb("activity_details").$type<{
+    types: Array<{
+      name: string;
+      isOffered: boolean;
+      description?: string;
+    }>;
+    equipment: Array<{
+      name: string;
+      description: string;
+      quantity: number;
+      condition: "new" | "good" | "fair";
+    }>;
+    safetyMeasures: Array<{
+      title: string;
+      description: string;
+      priority: "high" | "medium" | "low";
+      requiredCertifications?: string[];
+    }>;
+    instructions: Array<{
+      step: number;
+      title: string;
+      description: string;
+      imageUrl?: string;
+    }>;
+  }>().default({
+    types: [],
+    equipment: [],
+    safetyMeasures: [],
+    instructions: []
+  }),
+
   pricing: jsonb("pricing").$type<{
     baseRate: number;
     currency: string;
@@ -211,23 +258,17 @@ export const services = pgTable("services", {
     cancellationPolicy: {
       type: "flexible" | "moderate" | "strict";
       refundPercentage: number;
-      minimumNotice: number; // hours
+      minimumNotice: number;
     };
   }>().notNull(),
-  details: jsonb("details").$type<{
-    included: string[];
-    excluded: string[];
-    requirements: string[];
-    restrictions: string[];
-    cancellationPolicy: string;
-    termsAndConditions: string;
-  }>(),
+
   availability: jsonb("availability").$type<{
     regularHours: Array<{
       day: string;
       slots: Array<{
         start: string;
         end: string;
+        maxCapacity?: number;
       }>;
     }>;
     blackoutDates: string[];
@@ -236,9 +277,19 @@ export const services = pgTable("services", {
       slots: Array<{
         start: string;
         end: string;
+        maxCapacity?: number;
+        isSpecialEvent?: boolean;
+        eventDescription?: string;
       }>;
     }>;
+    seasonalAdjustments?: Array<{
+      startDate: string;
+      endDate: string;
+      availability?: "high" | "low" | "closed";
+      priceMultiplier?: number;
+    }>;
   }>().notNull(),
+
   location: jsonb("location").$type<{
     country: string;
     city: string;
@@ -354,15 +405,15 @@ export const bookings = pgTable("bookings", {
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  type: text("type", { 
-    enum: ["license", "insurance", "registration", "tax", "other"] 
+  type: text("type", {
+    enum: ["license", "insurance", "registration", "tax", "other"]
   }).notNull(),
   filename: text("filename").notNull(),
   mimeType: text("mime_type").notNull(),
   fileSize: integer("file_size").notNull(),
   storageKey: text("storage_key").notNull(),
-  status: text("status", { 
-    enum: ["pending", "approved", "rejected"] 
+  status: text("status", {
+    enum: ["pending", "approved", "rejected"]
   }).notNull().default("pending"),
   adminNotes: text("admin_notes"),
   expiryDate: timestamp("expiry_date"),

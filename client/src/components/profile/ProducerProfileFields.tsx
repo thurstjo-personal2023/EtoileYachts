@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Shield, Book, Globe, Award, FileText, Clock } from "lucide-react";
+import { YachtDetailsForm } from "./YachtDetailsForm";
+import { ActivityDetailsForm } from "./ActivityDetailsForm";
 
 type ProducerProfileFieldsProps = {
   form: ReturnType<typeof useForm<any>>;
@@ -24,7 +26,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
   ];
 
   const commonLanguages = [
-    "English", "Spanish", "French", "German", "Italian", 
+    "English", "Spanish", "French", "German", "Italian",
     "Portuguese", "Russian", "Arabic", "Chinese", "Japanese"
   ];
 
@@ -34,6 +36,8 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
         <TabsTrigger value="professional">Professional Information</TabsTrigger>
         <TabsTrigger value="legal">Legal</TabsTrigger>
         <TabsTrigger value="services">Services</TabsTrigger>
+        <TabsTrigger value="yachts">Yachts</TabsTrigger>
+        <TabsTrigger value="activities">Activities</TabsTrigger>
         <TabsTrigger value="availability">Availability</TabsTrigger>
         <TabsTrigger value="compliance">Compliance</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -87,11 +91,11 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
               <FormItem>
                 <FormLabel>Years of Experience</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     min="0"
-                    {...field} 
-                    onChange={e => field.onChange(parseInt(e.target.value))} 
+                    {...field}
+                    onChange={e => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
                 <FormDescription>
@@ -765,6 +769,34 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
             )}
           />
         </div>
+      </TabsContent>
+
+      <TabsContent value="yachts" className="space-y-6">
+        <YachtDetailsForm
+          onSubmit={async (data) => {
+            try {
+              // Handle yacht details submission
+              console.log("Yacht details:", data);
+              // TODO: Implement API call to save yacht details
+            } catch (error) {
+              console.error("Error saving yacht details:", error);
+            }
+          }}
+        />
+      </TabsContent>
+
+      <TabsContent value="activities" className="space-y-6">
+        <ActivityDetailsForm
+          onSubmit={async (data) => {
+            try {
+              // Handle activity details submission
+              console.log("Activity details:", data);
+              // TODO: Implement API call to save activity details
+            } catch (error) {
+              console.error("Error saving activity details:", error);
+            }
+          }}
+        />
       </TabsContent>
     </Tabs>
   );
