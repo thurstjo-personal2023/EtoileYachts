@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Anchor, Yacht, Waves, MapPin } from "lucide-react";
+import { Ship, Waves, Anchor, MapPin } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -34,7 +34,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: <Yacht className="h-10 w-10 mb-4" />,
+                icon: <Ship className="h-10 w-10 mb-4" />,
                 title: "Luxury Yachts",
                 description: "Premium vessels for unforgettable journeys"
               },
