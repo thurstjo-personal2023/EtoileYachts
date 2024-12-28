@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useUser } from "@/hooks/use-user";
+import { HoverWave, FloatingAnchor } from "@/components/ui/maritime-interactions";
 
 export function Header() {
   const { user, logout } = useUser();
@@ -14,11 +15,16 @@ export function Header() {
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
                 <Link href="/">
-                  <img
-                    src="/logo.png"
-                    alt="Etoile Yachts"
-                    className="h-10 w-auto"
-                  />
+                  <HoverWave>
+                    <div className="flex items-center gap-2">
+                      <FloatingAnchor />
+                      <img
+                        src="/logo.png"
+                        alt="Etoile Yachts"
+                        className="h-10 w-auto"
+                      />
+                    </div>
+                  </HoverWave>
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -29,15 +35,21 @@ export function Header() {
           {user ? (
             <>
               <Link href="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
+                <HoverWave>
+                  <Button variant="ghost">Dashboard</Button>
+                </HoverWave>
               </Link>
-              <Button variant="outline" onClick={() => logout()}>
-                Logout
-              </Button>
+              <HoverWave>
+                <Button variant="outline" onClick={() => logout()}>
+                  Logout
+                </Button>
+              </HoverWave>
             </>
           ) : (
             <Link href="/login">
-              <Button>Sign In</Button>
+              <HoverWave>
+                <Button>Sign In</Button>
+              </HoverWave>
             </Link>
           )}
         </div>
