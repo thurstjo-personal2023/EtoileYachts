@@ -54,7 +54,10 @@ export function ServiceCard({ service, onBook }: ServiceCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={onBook} className="w-full group-hover:bg-brand-primary/90 transition-colors">
+        <Button 
+          onClick={onBook} 
+          className="w-full bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
+        >
           Book Now
         </Button>
       </CardFooter>
