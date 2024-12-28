@@ -163,4 +163,41 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// Get personalized yacht recommendations
+router.post("/recommendations", async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const { preferences } = req.body;
+
+    if (!preferences || !preferences.preferredSize || !preferences.budget ||
+        !preferences.partySize || !preferences.luxuryPreference || !preferences.preferredLocation) {
+      return res.status(400).json({ message: "Invalid preferences data" });
+    }
+
+    // Get all available yachts
+    const availableYachts = await db.query.services.findMany({
+      where: eq(services.type, "yacht"),
+      with: {
+        provider: true
+      }
+    });
+
+    // Convert to YachtFeatures format
+    const yachtFeatures = availableYachts.map(yacht => ({
+      size: yacht.specifications?.length || 0,
+      price: Number(yacht.price),
+      capacity: yacht.specifications?.capacity || 0,
+      luxuryScore: yacht.specifications?.luxuryRating || 5,
+      location: yacht.location,
+    }));
+
+    res.json(yachtFeatures);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching recommendations", error });
+  }
+});
+
 export default router;
