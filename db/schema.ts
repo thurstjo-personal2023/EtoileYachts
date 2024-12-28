@@ -9,21 +9,21 @@ export const users = pgTable("users", {
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
   email: text("email").unique().notNull(),
-  fullName: text("fullName").notNull(),
-  userType: text("userType", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
+  fullName: text("full_name").notNull(),
+  userType: text("user_type", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
 
   // Basic Information
-  phoneNumber: text("phoneNumber"),
-  profileImage: text("profileImage"),
-  preferredLanguage: text("preferredLanguage").default("en"),
+  phoneNumber: text("phone_number"),
+  profileImage: text("profile_image"),
+  preferredLanguage: text("preferred_language").default("en"),
   bio: text("bio"),
   gender: text("gender"),
   occupation: text("occupation"),
 
   // Demographics
-  dateOfBirth: date("dateOfBirth"),
+  dateOfBirth: date("date_of_birth"),
   nationality: text("nationality"),
-  identificationNumber: text("identificationNumber"),
+  identificationNumber: text("identification_number"),
 
   // Location and Preferences
   location: jsonb("location").$type<{
@@ -34,30 +34,19 @@ export const users = pgTable("users", {
       latitude: number;
       longitude: number;
     };
-  }>().default({}),
+  }>(),
 
-  notificationPreferences: jsonb("notificationPreferences").$type<{
+  notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
     pushNotifications: boolean;
     marketingEmails: boolean;
     bookingReminders: boolean;
     paymentAlerts: boolean;
-    specialOffers: boolean;
-    newsletterSubscription: boolean;
-  }>().default({
-    email: true,
-    sms: false,
-    pushNotifications: true,
-    marketingEmails: false,
-    bookingReminders: true,
-    paymentAlerts: true,
-    specialOffers: false,
-    newsletterSubscription: false
-  }),
+  }>(),
 
-  // Travel and Experience Preferences
-  travelPreferences: jsonb("travelPreferences").$type<{
+  // Travel Preferences
+  travelPreferences: jsonb("travel_preferences").$type<{
     preferredDestinations: string[];
     travelFrequency: string;
     typicalTripDuration: string;
@@ -67,43 +56,22 @@ export const users = pgTable("users", {
       currency: string;
     };
     specialRequirements: string[];
-    accommodationPreferences: string[];
-    activityInterests: string[];
-    dietaryRestrictions: string[];
-  }>().default({
-    preferredDestinations: [],
-    travelFrequency: "",
-    typicalTripDuration: "",
-    budgetRange: { min: 0, max: 0, currency: "USD" },
-    specialRequirements: [],
-    accommodationPreferences: [],
-    activityInterests: [],
-    dietaryRestrictions: []
-  }),
+  }>(),
 
   // Loyalty Program
-  loyaltyProgram: jsonb("loyaltyProgram").$type<{
+  loyaltyProgram: jsonb("loyalty_program").$type<{
     memberId: string;
     tier: string;
     pointsBalance: number;
-    joinDate: string;
+    joinDate: string | null;
     lifetimePoints: number;
     benefits: string[];
-    tierExpiryDate: string;
+    tierExpiryDate: string | null;
     referralCode: string;
-  }>().default({
-    memberId: "",
-    tier: "Bronze",
-    pointsBalance: 0,
-    joinDate: new Date().toISOString(),
-    lifetimePoints: 0,
-    benefits: [],
-    tierExpiryDate: "",
-    referralCode: ""
-  }),
+  }>(),
 
   // Past Interactions
-  pastInteractions: jsonb("pastInteractions").$type<{
+  pastInteractions: jsonb("past_interactions").$type<{
     totalBookings: number;
     completedTrips: number;
     favoriteServices: number[];
@@ -118,18 +86,10 @@ export const users = pgTable("users", {
     }>;
     reviewsSubmitted: number;
     averageRating: number;
-  }>().default({
-    totalBookings: 0,
-    completedTrips: 0,
-    favoriteServices: [],
-    savedSearches: [],
-    recentlyViewed: [],
-    reviewsSubmitted: 0,
-    averageRating: 0
-  }),
+  }>(),
 
   // Payment Information
-  paymentMethods: jsonb("paymentMethods").$type<Array<{
+  paymentMethods: jsonb("payment_methods").$type<Array<{
     id: string;
     type: "credit_card" | "debit_card" | "bank_account";
     lastFourDigits: string;
@@ -142,10 +102,10 @@ export const users = pgTable("users", {
       country: string;
       postalCode: string;
     };
-  }>>().default([]),
+  }>>(),
 
   // Emergency Contact
-  emergencyContact: jsonb("emergencyContact").$type<{
+  emergencyContact: jsonb("emergency_contact").$type<{
     name: string;
     relationship: string;
     phone: string;
@@ -157,56 +117,47 @@ export const users = pgTable("users", {
       country: string;
       postalCode: string;
     };
-    alternateContact?: {
-      name: string;
-      phone: string;
-    };
-  }>().default({}),
+  }>(),
 
   // Privacy Settings
-  privacySettings: jsonb("privacySettings").$type<{
+  privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered";
     contactInfoVisibility: "public" | "private" | "registered";
     experienceVisibility: "public" | "private" | "registered";
     businessInfoVisibility: "public" | "private" | "registered";
-  }>().default({
-    profileVisibility: "registered",
-    contactInfoVisibility: "private",
-    experienceVisibility: "registered",
-    businessInfoVisibility: "registered"
-  }),
+  }>(),
 
   // Verification and Timestamps
-  verificationStatus: text("verificationStatus", { 
+  verificationStatus: text("verification_status", { 
     enum: ["unverified", "pending", "verified", "rejected"] 
   }).default("unverified"),
 
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   type: text("type", { 
     enum: ["license", "insurance", "registration", "tax", "other"] 
   }).notNull(),
   filename: text("filename").notNull(),
-  mimeType: text("mimeType").notNull(),
-  fileSize: integer("fileSize").notNull(),
-  storageKey: text("storageKey").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageKey: text("storage_key").notNull(),
   status: text("status", { 
     enum: ["pending", "approved", "rejected"] 
   }).notNull().default("pending"),
-  adminNotes: text("adminNotes"),
-  expiryDate: timestamp("expiryDate"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  adminNotes: text("admin_notes"),
+  expiryDate: timestamp("expiry_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
-  providerId: integer("providerId").references(() => users.id).notNull(),
+  providerId: integer("provider_id").references(() => users.id).notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   type: text("type").notNull(),
@@ -224,25 +175,25 @@ export const services = pgTable("services", {
     amenities?: string[];
     crew?: number;
   }>(),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  serviceId: integer("serviceId").references(() => services.id).notNull(),
-  consumerId: integer("consumerId").references(() => users.id).notNull(),
-  startTime: timestamp("startTime").notNull(),
-  endTime: timestamp("endTime").notNull(),
-  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  serviceId: integer("service_id").references(() => services.id).notNull(),
+  consumerId: integer("consumer_id").references(() => users.id).notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   status: text("status", {
     enum: ["pending", "confirmed", "completed", "cancelled"]
   }).notNull().default("pending"),
-  paymentStatus: text("paymentStatus", {
+  paymentStatus: text("payment_status", {
     enum: ["pending", "paid", "refunded", "failed"]
   }).notNull().default("pending"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Relations
