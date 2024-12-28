@@ -60,6 +60,8 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Attempting login for username: ${username}`);
+
         const [user] = await db
           .select()
           .from(users)
@@ -67,25 +69,35 @@ export function setupAuth(app: Express) {
           .limit(1);
 
         if (!user) {
+          console.log(`User not found: ${username}`);
           return done(null, false, { message: "Incorrect username." });
         }
+
+        console.log(`User found, verifying password`);
         const isMatch = await crypto.compare(password, user.password);
+
         if (!isMatch) {
+          console.log(`Password verification failed for user: ${username}`);
           return done(null, false, { message: "Incorrect password." });
         }
+
+        console.log(`Login successful for user: ${username}`);
         return done(null, user);
       } catch (err) {
+        console.error("Login error:", err);
         return done(err);
       }
     })
   );
 
   passport.serializeUser((user, done) => {
+    console.log(`Serializing user: ${user.id}`);
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log(`Deserializing user: ${id}`);
       const [user] = await db
         .select()
         .from(users)
@@ -93,17 +105,20 @@ export function setupAuth(app: Express) {
         .limit(1);
       done(null, user);
     } catch (err) {
+      console.error("Deserialization error:", err);
       done(err);
     }
   });
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log("Registration attempt:", req.body);
+
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
-        return res
-          .status(400)
-          .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+        const errorMessage = result.error.issues.map(i => i.message).join(", ");
+        console.log("Registration validation failed:", errorMessage);
+        return res.status(400).send("Invalid input: " + errorMessage);
       }
 
       const { username, password, email, userType, fullName } = result.data;
@@ -116,6 +131,7 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (existingUser) {
+        console.log(`Registration failed: Username ${username} already exists`);
         return res.status(400).send("Username already exists");
       }
 
@@ -134,8 +150,11 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
+      console.log(`User registered successfully: ${username}`);
+
       req.login(newUser, (err) => {
         if (err) {
+          console.error("Login after registration failed:", err);
           return next(err);
         }
         return res.json({
@@ -150,25 +169,32 @@ export function setupAuth(app: Express) {
         });
       });
     } catch (error) {
+      console.error("Registration error:", error);
       next(error);
     }
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log("Login attempt:", { username: req.body.username });
+
     passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
       if (err) {
+        console.error("Authentication error:", err);
         return next(err);
       }
 
       if (!user) {
+        console.log("Authentication failed:", info.message);
         return res.status(400).send(info.message ?? "Login failed");
       }
 
       req.logIn(user, (err) => {
         if (err) {
+          console.error("Login error:", err);
           return next(err);
         }
 
+        console.log(`Login successful for user: ${user.username}`);
         return res.json({
           message: "Login successful",
           user: {
@@ -184,10 +210,15 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
+    const username = req.user?.username;
+    console.log(`Logout attempt for user: ${username}`);
+
     req.logout((err) => {
       if (err) {
+        console.error("Logout error:", err);
         return res.status(500).send("Logout failed");
       }
+      console.log(`Logout successful for user: ${username}`);
       res.json({ message: "Logout successful" });
     });
   });
@@ -195,14 +226,10 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (req.isAuthenticated()) {
       const user = req.user;
-      return res.json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        userType: user.userType,
-        fullName: user.fullName,
-      });
+      console.log(`Current user session: ${user.username}`);
+      return res.json(user);
     }
+    console.log("No authenticated user session found");
     res.status(401).send("Not logged in");
   });
 }
