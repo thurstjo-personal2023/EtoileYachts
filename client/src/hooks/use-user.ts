@@ -14,16 +14,23 @@ interface AuthCredentials {
   email?: string;
 }
 
+interface AuthResponse {
+  message: string;
+  user: User;
+}
+
 export function useUser() {
   const { toast } = useToast();
-  
+
   const { data: user, error, isLoading } = useQuery<User>({
     queryKey: ['/api/user'],
     retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: AuthCredentials) => {
+  const loginMutation = useMutation<AuthResponse, Error, AuthCredentials>({
+    mutationFn: async (credentials) => {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,15 +39,16 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const text = await response.text();
+        throw new Error(text || 'Login failed');
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: ({ message }) => {
       toast({
         title: "Success",
-        description: "Logged in successfully",
+        description: message,
       });
     },
     onError: (error: Error) => {
@@ -52,8 +60,8 @@ export function useUser() {
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: AuthCredentials) => {
+  const registerMutation = useMutation<AuthResponse, Error, AuthCredentials>({
+    mutationFn: async (credentials) => {
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,15 +70,16 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const text = await response.text();
+        throw new Error(text || 'Registration failed');
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: ({ message }) => {
       toast({
         title: "Success",
-        description: "Registration successful",
+        description: message,
       });
     },
     onError: (error: Error) => {
@@ -82,7 +91,7 @@ export function useUser() {
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<{ message: string }, Error>({
     mutationFn: async () => {
       const response = await fetch('/api/logout', {
         method: 'POST',
@@ -90,15 +99,16 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const text = await response.text();
+        throw new Error(text || 'Logout failed');
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: ({ message }) => {
       toast({
         title: "Success",
-        description: "Logged out successfully",
+        description: message,
       });
     },
   });

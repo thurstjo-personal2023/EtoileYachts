@@ -1,9 +1,7 @@
 import type { Express, Request } from "express";
-import { createServer, type Server } from "http";
 import { db } from "@db";
 import { yachts, bookings, reviews, User } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { setupAuth } from "./auth";
 
 // Extend Express Request type for authenticated routes
 interface AuthenticatedRequest extends Request {
@@ -11,10 +9,7 @@ interface AuthenticatedRequest extends Request {
   isAuthenticated(): boolean;
 }
 
-export function registerRoutes(app: Express): Server {
-  // Create HTTP server
-  const httpServer = createServer(app);
-
+export function registerRoutes(app: Express) {
   // Yacht routes
   app.get("/api/yachts", async (_req, res) => {
     try {
@@ -56,7 +51,7 @@ export function registerRoutes(app: Express): Server {
 
   // Booking routes
   app.post("/api/bookings", async (req: AuthenticatedRequest, res) => {
-    if (!req.user) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -64,7 +59,7 @@ export function registerRoutes(app: Express): Server {
       const { yachtId, startDate, endDate, totalPrice } = req.body;
       const [booking] = await db.insert(bookings)
         .values({
-          userId: req.user.id,
+          userId: req.user!.id,
           yachtId,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
@@ -81,13 +76,13 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/bookings", async (req: AuthenticatedRequest, res) => {
-    if (!req.user) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
     try {
       const userBookings = await db.query.bookings.findMany({
-        where: eq(bookings.userId, req.user.id),
+        where: eq(bookings.userId, req.user!.id),
         with: {
           yacht: true,
         },
@@ -102,7 +97,7 @@ export function registerRoutes(app: Express): Server {
 
   // Review routes
   app.post("/api/reviews", async (req: AuthenticatedRequest, res) => {
-    if (!req.user) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -110,7 +105,7 @@ export function registerRoutes(app: Express): Server {
       const { yachtId, rating, comment } = req.body;
       const [review] = await db.insert(reviews)
         .values({
-          userId: req.user.id,
+          userId: req.user!.id,
           yachtId,
           rating,
           comment,
@@ -123,6 +118,4 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "Failed to create review" });
     }
   });
-
-  return httpServer;
 }
