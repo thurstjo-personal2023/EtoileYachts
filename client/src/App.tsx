@@ -8,8 +8,10 @@ import ServicesPage from "./pages/ServicesPage";
 import BookingsPage from "./pages/BookingsPage";
 import { useUser } from "./hooks/use-user";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 
-function App() {
+function AppRoutes() {
   const { user, isLoading } = useUser();
 
   if (isLoading) {
@@ -25,7 +27,7 @@ function App() {
       <Header />
       <main className="flex-1">
         <Switch>
-          <Route path="/" component={ServicesPage} />
+          <Route path="/" component={HomePage} />
           <Route path="/dashboard" component={DashboardPage} />
           <Route path="/services" component={ServicesPage} />
           <Route path="/bookings" component={BookingsPage} />
@@ -41,6 +43,14 @@ function App() {
       </main>
       <Toaster />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppRoutes />
+    </QueryClientProvider>
   );
 }
 
