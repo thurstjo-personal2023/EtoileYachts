@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Shield, Book, Globe, Award } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Shield, Book, Globe, Award, FileText, Clock } from "lucide-react";
 
 type ProducerProfileFieldsProps = {
   form: ReturnType<typeof useForm<any>>;
