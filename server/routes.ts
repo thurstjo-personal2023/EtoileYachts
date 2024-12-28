@@ -5,7 +5,7 @@ import servicesRouter from "./routes/services";
 import bookingsRouter from "./routes/bookings";
 
 export function registerRoutes(app: Express): Server {
-  // Set up authentication routes first
+  // Set up authentication routes and middleware first
   setupAuth(app);
 
   // Register API routes
