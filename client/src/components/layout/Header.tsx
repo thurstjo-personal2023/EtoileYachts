@@ -15,7 +15,7 @@ export function Header() {
               <Link href="/">
                 <a className="flex items-center">
                   <img
-                    src="/attached_assets/Etoile_Yachts_v1_2.png"
+                    src="/logo.png"
                     alt="Etoile Yachts"
                     className="h-10 w-auto"
                   />
