@@ -14,82 +14,16 @@ import { ConsumerProfileFields } from "@/components/profile/ConsumerProfileField
 import { ProducerProfileFields } from "@/components/profile/ProducerProfileFields";
 import { PartnerProfileFields } from "@/components/profile/PartnerProfileFields";
 
-// Schema definitions for consumer profile
-const consumerProfileSchema = z.object({
-  // Basic Information
+// Schema definitions for form validation
+const profileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email"),
   phoneNumber: z.string().optional(),
   bio: z.string().optional(),
-
-  // Demographics
   dateOfBirth: z.date().optional(),
   nationality: z.string().optional(),
   gender: z.string().optional(),
   occupation: z.string().optional(),
-
-  // Travel Preferences
-  travelPreferences: z.object({
-    preferredDestinations: z.array(z.string()).default([]),
-    travelFrequency: z.string().optional(),
-    typicalTripDuration: z.string().optional(),
-    budgetRange: z.object({
-      min: z.number(),
-      max: z.number(),
-      currency: z.string(),
-    }).optional(),
-    specialRequirements: z.array(z.string()).default([]),
-  }).default({}),
-
-  // Emergency Contact
-  emergencyContact: z.object({
-    name: z.string(),
-    relationship: z.string(),
-    phone: z.string(),
-    email: z.string().email("Invalid email"),
-    address: z.object({
-      street: z.string(),
-      city: z.string(),
-      state: z.string(),
-      country: z.string(),
-      postalCode: z.string(),
-    }).optional(),
-  }).optional(),
-
-  // Payment Methods
-  paymentMethods: z.array(z.object({
-    id: z.string(),
-    type: z.enum(["credit_card", "debit_card", "bank_account"]),
-    lastFourDigits: z.string(),
-    expiryDate: z.string().optional(),
-    isDefault: z.boolean(),
-    billingAddress: z.object({
-      street: z.string(),
-      city: z.string(),
-      state: z.string(),
-      country: z.string(),
-      postalCode: z.string(),
-    }),
-  })).default([]),
-});
-
-type ConsumerProfileData = z.infer<typeof consumerProfileSchema>;
-
-//Matching schema types with database schema
-const baseProfileSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email"),
-  phoneNumber: z.string().optional(),
-  preferredLanguage: z.string().default("en"),
-  bio: z.string().optional(),
-  dateOfBirth: z.date().optional(),
-  nationality: z.string().optional(),
-  identificationNumber: z.string().optional(),
-  emergencyContact: z.object({
-    name: z.string(),
-    relationship: z.string(),
-    phone: z.string(),
-  }).optional(),
   location: z.object({
     country: z.string(),
     city: z.string(),
@@ -125,16 +59,52 @@ const baseProfileSchema = z.object({
     experienceVisibility: "registered",
     businessInfoVisibility: "registered",
   }),
-});
-
-const producerProfileSchema = baseProfileSchema.extend({
+  // Additional fields based on user type
+  travelPreferences: z.object({
+    preferredDestinations: z.array(z.string()),
+    travelFrequency: z.string().optional(),
+    typicalTripDuration: z.string().optional(),
+    budgetRange: z.object({
+      min: z.number(),
+      max: z.number(),
+      currency: z.string(),
+    }).optional(),
+    specialRequirements: z.array(z.string()),
+  }).optional(),
+  paymentMethods: z.array(z.object({
+    id: z.string(),
+    type: z.enum(["credit_card", "debit_card", "bank_account"]),
+    lastFourDigits: z.string(),
+    expiryDate: z.string().optional(),
+    isDefault: z.boolean(),
+    billingAddress: z.object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      country: z.string(),
+      postalCode: z.string(),
+    }),
+  })).optional(),
+  emergencyContact: z.object({
+    name: z.string(),
+    relationship: z.string(),
+    phone: z.string(),
+    email: z.string().email("Invalid email"),
+    address: z.object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      country: z.string(),
+      postalCode: z.string(),
+    }),
+  }).optional(),
   boatingLicenses: z.array(z.object({
     type: z.string(),
     number: z.string(),
     expiryDate: z.string(),
     issuingCountry: z.string(),
     documentId: z.number(),
-  })).default([]),
+  })).optional(),
   boatingExperience: z.object({
     yearsOfExperience: z.number(),
     vesselTypes: z.array(z.string()),
@@ -144,12 +114,7 @@ const producerProfileSchema = baseProfileSchema.extend({
       completionDate: z.string(),
       issuingAuthority: z.string(),
     })),
-  }).default({
-    yearsOfExperience: 0,
-    vesselTypes: [],
-    certifications: [],
-    safetyTraining: [],
-  }),
+  }).optional(),
   insuranceInfo: z.object({
     provider: z.string(),
     policyNumber: z.string(),
@@ -157,9 +122,6 @@ const producerProfileSchema = baseProfileSchema.extend({
     coverage: z.string(),
     documentId: z.number(),
   }).optional(),
-});
-
-const partnerProfileSchema = baseProfileSchema.extend({
   businessInfo: z.object({
     companyName: z.string(),
     registrationNumber: z.string(),
@@ -177,20 +139,9 @@ const partnerProfileSchema = baseProfileSchema.extend({
     businessType: z.string(),
     employeeCount: z.number(),
   }).optional(),
-  insuranceInfo: z.object({
-    provider: z.string(),
-    policyNumber: z.string(),
-    expiryDate: z.string(),
-    coverage: z.string(),
-    documentId: z.number(),
-  }).optional(),
 });
 
-type BaseProfileData = z.infer<typeof baseProfileSchema>;
-type ProducerProfileData = z.infer<typeof producerProfileSchema>;
-type PartnerProfileData = z.infer<typeof partnerProfileSchema>;
-
-type ProfileFormData = BaseProfileData & Partial<ProducerProfileData> & Partial<PartnerProfileData> & Partial<ConsumerProfileData>;
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 async function updateProfile(data: ProfileFormData) {
   const response = await fetch("/api/users/profile", {
@@ -216,93 +167,49 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
 
   const form = useForm<ProfileFormData>({
-    resolver: zodResolver(
-      user?.userType === "producer"
-        ? producerProfileSchema
-        : user?.userType === "partner"
-          ? partnerProfileSchema
-          : user?.userType === "consumer"
-            ? consumerProfileSchema
-            : baseProfileSchema
-    ),
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: user?.fullName || "",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
-      preferredLanguage: user?.preferredLanguage || "en",
       bio: user?.bio || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
       nationality: user?.nationality || "",
+      gender: user?.gender || "",
+      occupation: user?.occupation || "",
       location: user?.location,
-      notificationPreferences: user?.notificationPreferences || {
-        email: true,
-        sms: false,
-        pushNotifications: true,
-        marketingEmails: false,
-        bookingReminders: true,
-        paymentAlerts: true,
+      notificationPreferences: user?.notificationPreferences,
+      privacySettings: user?.privacySettings,
+      travelPreferences: user?.travelPreferences,
+      paymentMethods: user?.paymentMethods || [],
+      emergencyContact: user?.emergencyContact,
+      boatingLicenses: user?.boatingLicenses || [],
+      boatingExperience: user?.boatingExperience || {
+        yearsOfExperience: 0,
+        vesselTypes: [],
+        certifications: [],
+        safetyTraining: [],
       },
-      privacySettings: user?.privacySettings || {
-        profileVisibility: "registered",
-        contactInfoVisibility: "private",
-        experienceVisibility: "registered",
-        businessInfoVisibility: "registered",
+      insuranceInfo: user?.insuranceInfo || {
+        provider: "",
+        policyNumber: "",
+        expiryDate: "",
+        coverage: "",
+        documentId: 0,
       },
-      ...(user?.userType === "producer" && {
-        boatingExperience: user?.boatingExperience || {
-          yearsOfExperience: 0,
-          vesselTypes: [],
-          certifications: [],
-          safetyTraining: [],
-        },
-        boatingLicenses: user?.boatingLicenses || [],
-        insuranceInfo: user?.insuranceInfo || {
-          provider: "",
-          policyNumber: "",
-          expiryDate: "",
-          coverage: "",
-          documentId: 0,
-        },
-      }),
-      ...(user?.userType === "partner" && {
-        businessInfo: user?.businessInfo || {
-          companyName: "",
-          registrationNumber: "",
-          taxId: "",
-          website: "",
-          yearEstablished: new Date().getFullYear(),
-          serviceAreas: [],
-          operatingHours: [],
-          registrationDocumentId: 0,
-          taxDocumentId: 0,
-          businessType: "",
-          employeeCount: 0,
-        },
-        insuranceInfo: user?.insuranceInfo || {
-          provider: "",
-          policyNumber: "",
-          expiryDate: "",
-          coverage: "",
-          documentId: 0,
-        },
-      }),
-      ...(user?.userType === "consumer" && {
-        gender: user?.gender || "",
-        occupation: user?.occupation || "",
-        travelPreferences: user?.travelPreferences || {
-          preferredDestinations: [],
-          travelFrequency: "",
-          typicalTripDuration: "",
-          budgetRange: {
-            min: 0,
-            max: 0,
-            currency: "USD",
-          },
-          specialRequirements: [],
-        },
-        emergencyContact: user?.emergencyContact,
-        paymentMethods: user?.paymentMethods || [],
-      }),
+      businessInfo: user?.businessInfo || {
+        companyName: "",
+        registrationNumber: "",
+        taxId: "",
+        website: "",
+        yearEstablished: new Date().getFullYear(),
+        serviceAreas: [],
+        operatingHours: [],
+        registrationDocumentId: 0,
+        taxDocumentId: 0,
+        businessType: "",
+        employeeCount: 0,
+      },
     },
   });
 

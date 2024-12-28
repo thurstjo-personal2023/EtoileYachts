@@ -3,6 +3,15 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+// Common types for reuse
+const addressSchema = {
+  street: text("street"),
+  city: text("city"),
+  state: text("state"),
+  country: text("country"),
+  postalCode: text("postalCode"),
+};
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
@@ -87,13 +96,7 @@ export const users = pgTable("users", {
     lastFourDigits: string;
     expiryDate?: string;
     isDefault: boolean;
-    billingAddress: {
-      street: string;
-      city: string;
-      state: string;
-      country: string;
-      postalCode: string;
-    };
+    billingAddress: typeof addressSchema;
   }>>(),
 
   // Emergency Contact
@@ -102,13 +105,7 @@ export const users = pgTable("users", {
     relationship: string;
     phone: string;
     email: string;
-    address: {
-      street: string;
-      city: string;
-      state: string;
-      country: string;
-      postalCode: string;
-    };
+    address: typeof addressSchema;
     alternateContact?: {
       name: string;
       phone: string;
@@ -222,10 +219,11 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
-// Relations
+// Define relations
 export const usersRelations = relations(users, ({ many }) => ({
-  providedServices: many(services),
   documents: many(documents),
+  services: many(services),
+  bookings: many(bookings),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -242,11 +240,25 @@ export const servicesRelations = relations(services, ({ one }) => ({
   }),
 }));
 
-// Schemas for validation
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+    service: one(services, {
+        fields: [bookings.serviceId],
+        references: [services.id]
+    }),
+    consumer: one(users, {
+        fields: [bookings.consumerId],
+        references: [users.id]
+    })
+}))
+
+
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
+
+// Export types for frontend use
+export type UserProfile = SelectUser;
 
 export const insertDocumentSchema = createInsertSchema(documents);
 export const selectDocumentSchema = createSelectSchema(documents);
