@@ -1,7 +1,6 @@
 import { pgTable, text, serial, timestamp, jsonb, decimal, integer, boolean, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
-import { z } from "zod";
 
 // Table Declarations
 export const users = pgTable("users", {
@@ -56,18 +55,6 @@ export const users = pgTable("users", {
       currency: string;
     };
     specialRequirements: string[];
-  }>(),
-
-  // Loyalty Program
-  loyaltyProgram: jsonb("loyalty_program").$type<{
-    memberId: string;
-    tier: string;
-    pointsBalance: number;
-    joinDate: string | null;
-    lifetimePoints: number;
-    benefits: string[];
-    tierExpiryDate: string | null;
-    referralCode: string;
   }>(),
 
   // Past Interactions
