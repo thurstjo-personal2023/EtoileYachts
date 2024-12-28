@@ -9,6 +9,24 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   fullName: text("fullName").notNull(),
   userType: text("userType").notNull().default("consumer"), // consumer, producer, or partner
+  phoneNumber: text("phoneNumber"),
+  profileImage: text("profileImage"),
+  preferredLanguage: text("preferredLanguage").default("en"),
+  notificationPreferences: json("notificationPreferences").$type<{
+    email: boolean;
+    sms: boolean;
+    pushNotifications: boolean;
+  }>().default({
+    email: true,
+    sms: false,
+    pushNotifications: true,
+  }),
+  bio: text("bio"),
+  location: json("location").$type<{
+    country: string;
+    city: string;
+  }>(),
+  verificationStatus: text("verificationStatus").default("unverified"), // unverified, pending, verified
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });

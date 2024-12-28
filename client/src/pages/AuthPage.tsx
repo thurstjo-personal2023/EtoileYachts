@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -22,8 +24,12 @@ export default function AuthPage() {
       username: "",
       password: "",
       email: "",
-      userType: "consumer",
       fullName: "",
+      userType: "consumer",
+      phoneNumber: "",
+      preferredLanguage: "en",
+      bio: "",
+      location: { country: "", city: "" },
     },
   });
 
@@ -52,7 +58,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="container max-w-md py-16">
+    <div className="container max-w-2xl py-16">
       <Card className="backdrop-blur bg-background/95">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Welcome to Etoile Yachts</CardTitle>
@@ -81,8 +87,9 @@ export default function AuthPage() {
                     </FormItem>
                   )}
                 />
+
                 {activeTab === "register" && (
-                  <>
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="email"
@@ -96,6 +103,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="fullName"
@@ -109,8 +117,93 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                  </>
+
+                    <FormField
+                      control={form.control}
+                      name="userType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your account type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="consumer">Consumer</SelectItem>
+                              <SelectItem value="producer">Producer (Yacht Owner/Captain)</SelectItem>
+                              <SelectItem value="partner">Partner (Service Provider)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="Enter your phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="preferredLanguage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Language</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your preferred language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="fr">French</SelectItem>
+                              <SelectItem value="es">Spanish</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bio</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Tell us a bit about yourself" 
+                              className="resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -124,6 +217,7 @@ export default function AuthPage() {
                     </FormItem>
                   )}
                 />
+
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {activeTab === "login" ? "Sign In" : "Create Account"}
