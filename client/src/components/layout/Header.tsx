@@ -12,15 +12,15 @@ export function Header() {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/">
-                <a className="flex items-center">
+              <NavigationMenuLink asChild>
+                <Link href="/">
                   <img
                     src="/logo.png"
                     alt="Etoile Yachts"
                     className="h-10 w-auto"
                   />
-                </a>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
