@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, json, decimal, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, json, decimal, integer, boolean, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -12,6 +12,50 @@ export const users = pgTable("users", {
   phoneNumber: text("phoneNumber"),
   profileImage: text("profileImage"),
   preferredLanguage: text("preferredLanguage").default("en"),
+  bio: text("bio"),
+  dateOfBirth: date("dateOfBirth"),
+  nationality: text("nationality"),
+  identificationNumber: text("identificationNumber"), // Passport/ID number
+  emergencyContact: json("emergencyContact").$type<{
+    name: string;
+    relationship: string;
+    phone: string;
+  }>(),
+  boatingLicenses: json("boatingLicenses").$type<{
+    type: string;
+    number: string;
+    expiryDate: string;
+    issuingCountry: string;
+  }[]>(),
+  boatingExperience: json("boatingExperience").$type<{
+    yearsOfExperience: number;
+    vesselTypes: string[];
+    certifications: string[];
+  }>(),
+  insuranceInfo: json("insuranceInfo").$type<{
+    provider: string;
+    policyNumber: string;
+    expiryDate: string;
+    coverage: string;
+  }>(),
+  businessInfo: json("businessInfo").$type<{
+    companyName: string;
+    registrationNumber: string;
+    taxId: string;
+    website: string;
+    yearEstablished: number;
+    serviceAreas: string[];
+  }>(),
+  location: json("location").$type<{
+    country: string;
+    city: string;
+    address: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  }>(),
+  verificationStatus: text("verificationStatus").default("unverified"), // unverified, pending, verified
   notificationPreferences: json("notificationPreferences").$type<{
     email: boolean;
     sms: boolean;
@@ -21,12 +65,15 @@ export const users = pgTable("users", {
     sms: false,
     pushNotifications: true,
   }),
-  bio: text("bio"),
-  location: json("location").$type<{
-    country: string;
-    city: string;
-  }>(),
-  verificationStatus: text("verificationStatus").default("unverified"), // unverified, pending, verified
+  privacySettings: json("privacySettings").$type<{
+    profileVisibility: "public" | "private" | "registered";
+    contactInfoVisibility: "public" | "private" | "registered";
+    experienceVisibility: "public" | "private" | "registered";
+  }>().default({
+    profileVisibility: "registered",
+    contactInfoVisibility: "private",
+    experienceVisibility: "registered",
+  }),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
