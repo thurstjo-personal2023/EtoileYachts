@@ -1,6 +1,7 @@
 import { pgTable, text, serial, timestamp, jsonb, decimal, integer, boolean, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -8,7 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email").unique().notNull(),
   fullName: text("fullName").notNull(),
-  userType: text("userType").notNull().default("consumer"),
+  userType: text("userType", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
   phoneNumber: text("phoneNumber"),
   profileImage: text("profileImage"),
   preferredLanguage: text("preferredLanguage").default("en"),
@@ -71,7 +72,9 @@ export const users = pgTable("users", {
       longitude: number;
     };
   }>(),
-  verificationStatus: text("verificationStatus").default("unverified"),
+  verificationStatus: text("verificationStatus", { 
+    enum: ["unverified", "pending", "verified", "rejected"] 
+  }).default("unverified"),
   notificationPreferences: jsonb("notificationPreferences").$type<{
     email: boolean;
     sms: boolean;
@@ -105,12 +108,16 @@ export const users = pgTable("users", {
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   userId: integer("userId").references(() => users.id).notNull(),
-  type: text("type").notNull(),
+  type: text("type", { 
+    enum: ["license", "insurance", "registration", "tax", "other"] 
+  }).notNull(),
   filename: text("filename").notNull(),
   mimeType: text("mimeType").notNull(),
   fileSize: integer("fileSize").notNull(),
   storageKey: text("storageKey").notNull(),
-  status: text("status").notNull().default("pending"),
+  status: text("status", { 
+    enum: ["pending", "approved", "rejected"] 
+  }).notNull().default("pending"),
   adminNotes: text("adminNotes"),
   expiryDate: timestamp("expiryDate"),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -148,8 +155,12 @@ export const bookings = pgTable("bookings", {
   startTime: timestamp("startTime").notNull(),
   endTime: timestamp("endTime").notNull(),
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"),
-  paymentStatus: text("paymentStatus").notNull().default("pending"),
+  status: text("status", {
+    enum: ["pending", "confirmed", "completed", "cancelled"]
+  }).notNull().default("pending"),
+  paymentStatus: text("paymentStatus", {
+    enum: ["pending", "paid", "refunded", "failed"]
+  }).notNull().default("pending"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });

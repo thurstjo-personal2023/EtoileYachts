@@ -16,12 +16,14 @@ import { Loader2, Upload, UserCircle, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SelectUser } from "@db/schema";
 
+// Matching schema types with database schema
 const baseProfileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email"),
   phoneNumber: z.string().optional(),
-  preferredLanguage: z.string(),
+  preferredLanguage: z.string().default("en"),
   bio: z.string().optional(),
   dateOfBirth: z.date().optional(),
   nationality: z.string().optional(),
@@ -35,40 +37,72 @@ const baseProfileSchema = z.object({
     country: z.string(),
     city: z.string(),
     address: z.string(),
-  }),
+    coordinates: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+    }).optional(),
+  }).optional(),
   notificationPreferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
     pushNotifications: z.boolean(),
+    marketingEmails: z.boolean(),
+    bookingReminders: z.boolean(),
+    paymentAlerts: z.boolean(),
+  }).default({
+    email: true,
+    sms: false,
+    pushNotifications: true,
+    marketingEmails: false,
+    bookingReminders: true,
+    paymentAlerts: true,
   }),
   privacySettings: z.object({
     profileVisibility: z.enum(["public", "private", "registered"]),
     contactInfoVisibility: z.enum(["public", "private", "registered"]),
     experienceVisibility: z.enum(["public", "private", "registered"]),
+    businessInfoVisibility: z.enum(["public", "private", "registered"]),
+  }).default({
+    profileVisibility: "registered",
+    contactInfoVisibility: "private",
+    experienceVisibility: "registered",
+    businessInfoVisibility: "registered",
   }),
 });
 
-const producerExtraSchema = z.object({
+const producerProfileSchema = baseProfileSchema.extend({
   boatingLicenses: z.array(z.object({
     type: z.string(),
     number: z.string(),
     expiryDate: z.string(),
     issuingCountry: z.string(),
-  })),
+    documentId: z.number(),
+  })).default([]),
   boatingExperience: z.object({
     yearsOfExperience: z.number(),
     vesselTypes: z.array(z.string()),
     certifications: z.array(z.string()),
+    safetyTraining: z.array(z.object({
+      type: z.string(),
+      completionDate: z.string(),
+      issuingAuthority: z.string(),
+    })),
+  }).default({
+    yearsOfExperience: 0,
+    vesselTypes: [],
+    certifications: [],
+    safetyTraining: [],
   }),
   insuranceInfo: z.object({
     provider: z.string(),
     policyNumber: z.string(),
     expiryDate: z.string(),
     coverage: z.string(),
-  }),
+    documentId: z.number(),
+  }).optional(),
 });
 
-const partnerExtraSchema = z.object({
+const partnerProfileSchema = baseProfileSchema.extend({
   businessInfo: z.object({
     companyName: z.string(),
     registrationNumber: z.string(),
@@ -76,22 +110,30 @@ const partnerExtraSchema = z.object({
     website: z.string().url().optional(),
     yearEstablished: z.number(),
     serviceAreas: z.array(z.string()),
-  }),
+    operatingHours: z.array(z.object({
+      day: z.string(),
+      open: z.string(),
+      close: z.string(),
+    })),
+    registrationDocumentId: z.number(),
+    taxDocumentId: z.number(),
+    businessType: z.string(),
+    employeeCount: z.number(),
+  }).optional(),
   insuranceInfo: z.object({
     provider: z.string(),
     policyNumber: z.string(),
     expiryDate: z.string(),
     coverage: z.string(),
-  }),
+    documentId: z.number(),
+  }).optional(),
 });
 
-const consumerProfileSchema = baseProfileSchema;
-const producerProfileSchema = baseProfileSchema.merge(producerExtraSchema);
-const partnerProfileSchema = baseProfileSchema.merge(partnerExtraSchema);
+type BaseProfileData = z.infer<typeof baseProfileSchema>;
+type ProducerProfileData = z.infer<typeof producerProfileSchema>;
+type PartnerProfileData = z.infer<typeof partnerProfileSchema>;
 
-type ProfileFormData = z.infer<typeof baseProfileSchema> & 
-  Partial<z.infer<typeof producerExtraSchema>> & 
-  Partial<z.infer<typeof partnerExtraSchema>>;
+type ProfileFormData = BaseProfileData & Partial<ProducerProfileData> & Partial<PartnerProfileData>;
 
 async function updateProfile(data: ProfileFormData) {
   const response = await fetch("/api/users/profile", {
@@ -108,7 +150,7 @@ async function updateProfile(data: ProfileFormData) {
   return response.json();
 }
 
-function BaseProfileFields({ form }: { form: any }) {
+function BaseProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
   return (
     <div className="space-y-4">
       <FormField
@@ -125,7 +167,34 @@ function BaseProfileFields({ form }: { form: any }) {
         )}
       />
 
-      {/* Add all base fields here */}
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input {...field} type="email" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="phoneNumber"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phone Number</FormLabel>
+            <FormControl>
+              <Input {...field} type="tel" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="dateOfBirth"
@@ -146,7 +215,6 @@ function BaseProfileFields({ form }: { form: any }) {
         )}
       />
 
-      {/* Emergency Contact */}
       <div className="space-y-4 border rounded-lg p-4">
         <h3 className="font-medium">Emergency Contact</h3>
         <FormField
@@ -162,10 +230,8 @@ function BaseProfileFields({ form }: { form: any }) {
             </FormItem>
           )}
         />
-        {/* Add other emergency contact fields */}
       </div>
 
-      {/* Privacy Settings */}
       <div className="space-y-4 border rounded-lg p-4">
         <h3 className="font-medium">Privacy Settings</h3>
         <FormField
@@ -190,13 +256,12 @@ function BaseProfileFields({ form }: { form: any }) {
             </FormItem>
           )}
         />
-        {/* Add other privacy settings */}
       </div>
     </div>
   );
 }
 
-function ProducerProfileFields({ form }: { form: any }) {
+function ProducerProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
   return (
     <div className="space-y-4">
       <div className="space-y-4 border rounded-lg p-4">
@@ -208,18 +273,16 @@ function ProducerProfileFields({ form }: { form: any }) {
             <FormItem>
               <FormLabel>Years of Experience</FormLabel>
               <FormControl>
-                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                <Input 
+                  type="number" 
+                  {...field} 
+                  onChange={e => field.onChange(parseInt(e.target.value))} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {/* Add other boating experience fields */}
-      </div>
-
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Licenses & Certifications</h3>
-        {/* Add license fields */}
       </div>
 
       <div className="space-y-4 border rounded-lg p-4">
@@ -237,13 +300,12 @@ function ProducerProfileFields({ form }: { form: any }) {
             </FormItem>
           )}
         />
-        {/* Add other insurance fields */}
       </div>
     </div>
   );
 }
 
-function PartnerProfileFields({ form }: { form: any }) {
+function PartnerProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
   return (
     <div className="space-y-4">
       <div className="space-y-4 border rounded-lg p-4">
@@ -261,12 +323,6 @@ function PartnerProfileFields({ form }: { form: any }) {
             </FormItem>
           )}
         />
-        {/* Add other business fields */}
-      </div>
-
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Insurance Information</h3>
-        {/* Add insurance fields */}
       </div>
     </div>
   );
@@ -276,7 +332,7 @@ export default function ProfilePage() {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("basic");
 
   const form = useForm<ProfileFormData>({
@@ -285,7 +341,7 @@ export default function ProfilePage() {
         ? producerProfileSchema 
         : user?.userType === "partner"
           ? partnerProfileSchema
-          : consumerProfileSchema
+          : baseProfileSchema
     ),
     defaultValues: {
       fullName: user?.fullName || "",
@@ -295,22 +351,27 @@ export default function ProfilePage() {
       bio: user?.bio || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
       nationality: user?.nationality || "",
-      location: user?.location || { country: "", city: "", address: "" },
+      location: user?.location,
       notificationPreferences: user?.notificationPreferences || {
         email: true,
         sms: false,
         pushNotifications: true,
+        marketingEmails: false,
+        bookingReminders: true,
+        paymentAlerts: true,
       },
       privacySettings: user?.privacySettings || {
         profileVisibility: "registered",
         contactInfoVisibility: "private",
         experienceVisibility: "registered",
+        businessInfoVisibility: "registered",
       },
       ...(user?.userType === "producer" && {
         boatingExperience: user?.boatingExperience || {
           yearsOfExperience: 0,
           vesselTypes: [],
           certifications: [],
+          safetyTraining: [],
         },
         boatingLicenses: user?.boatingLicenses || [],
         insuranceInfo: user?.insuranceInfo || {
@@ -318,6 +379,7 @@ export default function ProfilePage() {
           policyNumber: "",
           expiryDate: "",
           coverage: "",
+          documentId: 0,
         },
       }),
       ...(user?.userType === "partner" && {
@@ -328,12 +390,18 @@ export default function ProfilePage() {
           website: "",
           yearEstablished: new Date().getFullYear(),
           serviceAreas: [],
+          operatingHours: [],
+          registrationDocumentId: 0,
+          taxDocumentId: 0,
+          businessType: "",
+          employeeCount: 0,
         },
         insuranceInfo: user?.insuranceInfo || {
           provider: "",
           policyNumber: "",
           expiryDate: "",
           coverage: "",
+          documentId: 0,
         },
       }),
     },
@@ -351,7 +419,7 @@ export default function ProfilePage() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to update profile",
         variant: "destructive",
       });
     },
@@ -395,6 +463,10 @@ export default function ProfilePage() {
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="container max-w-4xl py-16">
       <Card>
@@ -407,8 +479,8 @@ export default function ProfilePage() {
               <div className="relative">
                 {(imagePreview || user?.profileImage) ? (
                   <img
-                    src={imagePreview || user?.profileImage}
-                    alt="Profile"
+                    src={imagePreview || user?.profileImage || ''}
+                    alt={user?.fullName || 'Profile'}
                     className="w-32 h-32 rounded-full object-cover"
                   />
                 ) : (
@@ -463,9 +535,6 @@ export default function ProfilePage() {
                     <TabsContent value="experience" className="space-y-4">
                       <ProducerProfileFields form={form} />
                     </TabsContent>
-                    <TabsContent value="licenses" className="space-y-4">
-                      {/* License fields */}
-                    </TabsContent>
                   </>
                 )}
 
@@ -474,15 +543,8 @@ export default function ProfilePage() {
                     <TabsContent value="business" className="space-y-4">
                       <PartnerProfileFields form={form} />
                     </TabsContent>
-                    <TabsContent value="service-areas" className="space-y-4">
-                      {/* Service area fields */}
-                    </TabsContent>
                   </>
                 )}
-
-                <TabsContent value="privacy" className="space-y-4">
-                  {/* Privacy settings */}
-                </TabsContent>
               </Tabs>
 
               <div className="flex justify-end">
