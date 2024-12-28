@@ -13,8 +13,12 @@ export function Header() {
           <NavigationMenuList>
             <NavigationMenuItem>
               <Link href="/">
-                <a className="text-2xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  Etoile Yachts
+                <a className="flex items-center">
+                  <img
+                    src="/attached_assets/Etoile_Yachts_v1_2.png"
+                    alt="Etoile Yachts"
+                    className="h-10 w-auto"
+                  />
                 </a>
               </Link>
             </NavigationMenuItem>
