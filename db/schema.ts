@@ -20,9 +20,19 @@ export const services = pgTable("services", {
   description: text("description").notNull(),
   type: text("type").notNull(), // yacht, water_sports, catering, etc.
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  location: json("location").notNull(), // { lat: number, lng: number }
+  location: json("location").notNull().$type<{
+    lat: number;
+    lng: number;
+  }>(),
   images: json("images").$type<string[]>(), // array of image URLs
-  availability: json("availability").notNull(), // array of available time slots
+  availability: json("availability").$type<string[]>().notNull(), // array of available time slots
+  specifications: json("specifications").$type<{
+    length?: number;
+    capacity?: number;
+    luxuryRating?: number;
+    amenities?: string[];
+    crew?: number;
+  }>(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -43,27 +53,15 @@ export const bookings = pgTable("bookings", {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   providedServices: many(services),
-  bookings: many(bookings),
 }));
 
-export const servicesRelations = relations(services, ({ one, many }) => ({
+export const servicesRelations = relations(services, ({ one }) => ({
   provider: one(users, {
     fields: [services.providerId],
     references: [users.id],
   }),
-  bookings: many(bookings),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
-  service: one(services, {
-    fields: [bookings.serviceId],
-    references: [services.id],
-  }),
-  consumer: one(users, {
-    fields: [bookings.consumerId],
-    references: [users.id],
-  }),
-}));
 
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users);

@@ -187,11 +187,11 @@ router.post("/recommendations", async (req, res) => {
 
     // Convert to YachtFeatures format
     const yachtFeatures = availableYachts.map(yacht => ({
-      size: yacht.specifications?.length || 0,
+      size: yacht.specifications?.length ?? 0,
       price: Number(yacht.price),
-      capacity: yacht.specifications?.capacity || 0,
-      luxuryScore: yacht.specifications?.luxuryRating || 5,
-      location: yacht.location,
+      capacity: yacht.specifications?.capacity ?? 0,
+      luxuryScore: yacht.specifications?.luxuryRating ?? 5,
+      location: yacht.location as { lat: number; lng: number },
     }));
 
     res.json(yachtFeatures);

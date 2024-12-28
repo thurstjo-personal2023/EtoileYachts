@@ -10,6 +10,8 @@ type ServiceCardProps = {
 };
 
 export function ServiceCard({ service, onBook }: ServiceCardProps) {
+  const location = service.location as { lat: number; lng: number };
+
   return (
     <Card className="h-full flex flex-col group relative overflow-hidden">
       <CardHeader>
@@ -34,9 +36,7 @@ export function ServiceCard({ service, onBook }: ServiceCardProps) {
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="h-4 w-4 text-brand-primary" />
             <span>
-              {typeof service.location === 'object' && service.location && 'lat' in service.location && 'lng' in service.location
-                ? `${service.location.lat.toFixed(4)}, ${service.location.lng.toFixed(4)}`
-                : 'Location unavailable'}
+              {location ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : 'Location unavailable'}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
@@ -49,7 +49,7 @@ export function ServiceCard({ service, onBook }: ServiceCardProps) {
           </div>
           <div className="flex items-center gap-2 text-sm font-medium">
             <DollarSign className="h-4 w-4 text-brand-primary" />
-            <span>${parseFloat(service.price).toLocaleString()}/day</span>
+            <span>${parseFloat(service.price.toString()).toLocaleString()}/day</span>
           </div>
         </div>
       </CardContent>
