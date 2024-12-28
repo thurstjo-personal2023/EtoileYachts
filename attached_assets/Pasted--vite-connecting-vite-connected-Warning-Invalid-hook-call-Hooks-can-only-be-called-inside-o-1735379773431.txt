@@ -1,0 +1,32 @@
+[vite] connecting...
+[vite] connected.
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+Cannot read properties of null (reading 'useContext')
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+Cannot read properties of null (reading 'useContext')
+The above error occurred in the <App> component:
+
+    at App (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/src/App.tsx:29:31)
+    at QueryClientProvider (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a8c16929:2805:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Cannot read properties of null (reading 'useContext')
+at Object.useContext (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QCHXOAYK.js?v=3fe9c52a:1062:29)
+at useQueryClient (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3fe9c52a:2795:24)
+at useUser (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/src/hooks/use-user.ts:38:23)
+at App (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/src/App.tsx:29:31)
+at renderWithHooks (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:11548:26)
+at mountIndeterminateComponent (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:14926:21)
+at beginWork (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:15914:22)
+at beginWork$1 (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:19753:22)
+at performUnitOfWork (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:19198:20)
+at workLoopSync (https://3459e702-3220-43e0-a9f3-ad731ec366fb-00-2jhbofv8ruq81.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=a8c16929:19137:13)
