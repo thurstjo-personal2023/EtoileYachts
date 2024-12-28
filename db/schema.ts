@@ -10,59 +10,112 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   fullName: text("fullName").notNull(),
   userType: text("userType", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
+
+  // Basic Information
   phoneNumber: text("phoneNumber"),
   profileImage: text("profileImage"),
   preferredLanguage: text("preferredLanguage").default("en"),
   bio: text("bio"),
+
+  // Demographics
   dateOfBirth: date("dateOfBirth"),
   nationality: text("nationality"),
   identificationNumber: text("identificationNumber"),
+  gender: text("gender"),
+  occupation: text("occupation"),
+
+  // Account Preferences
+  communicationPreferences: jsonb("communicationPreferences").$type<{
+    preferredContactMethod: "email" | "phone" | "sms";
+    newsletterSubscription: boolean;
+    marketingCommunications: boolean;
+    eventNotifications: boolean;
+    bookingReminders: boolean;
+    specialOffers: boolean;
+  }>(),
+
+  // Travel and Experience Preferences
+  travelPreferences: jsonb("travelPreferences").$type<{
+    preferredDestinations: string[];
+    travelFrequency: string;
+    typicalTripDuration: string;
+    accommodationPreferences: string[];
+    activityInterests: string[];
+    budgetRange: {
+      min: number;
+      max: number;
+      currency: string;
+    };
+    specialRequirements: string[];
+    dietaryRestrictions: string[];
+  }>(),
+
+  // Loyalty Program
+  loyaltyProgram: jsonb("loyaltyProgram").$type<{
+    memberId: string;
+    tier: string;
+    pointsBalance: number;
+    joinDate: string;
+    lifetimePoints: number;
+    benefits: string[];
+    tierExpiryDate: string;
+    referralCode: string;
+  }>(),
+
+  // Past Interactions
+  pastInteractions: jsonb("pastInteractions").$type<{
+    totalBookings: number;
+    completedTrips: number;
+    favoriteServices: number[];
+    savedSearches: Array<{
+      query: string;
+      filters: Record<string, unknown>;
+      savedAt: string;
+    }>;
+    recentlyViewed: Array<{
+      serviceId: number;
+      viewedAt: string;
+    }>;
+    reviewsSubmitted: number;
+    averageRating: number;
+  }>(),
+
+  // Payment Information
+  paymentMethods: jsonb("paymentMethods").$type<Array<{
+    id: string;
+    type: "credit_card" | "debit_card" | "bank_account";
+    lastFourDigits: string;
+    expiryDate?: string;
+    isDefault: boolean;
+    billingAddress: {
+      street: string;
+      city: string;
+      state: string;
+      country: string;
+      postalCode: string;
+    };
+  }>>(),
+
+  // Emergency Contact
   emergencyContact: jsonb("emergencyContact").$type<{
     name: string;
     relationship: string;
     phone: string;
+    email: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      country: string;
+      postalCode: string;
+    };
+    alternateContact?: {
+      name: string;
+      phone: string;
+    };
   }>(),
-  boatingLicenses: jsonb("boatingLicenses").$type<{
-    type: string;
-    number: string;
-    expiryDate: string;
-    issuingCountry: string;
-    documentId: number;
-  }[]>(),
-  boatingExperience: jsonb("boatingExperience").$type<{
-    yearsOfExperience: number;
-    vesselTypes: string[];
-    certifications: string[];
-    safetyTraining: {
-      type: string;
-      completionDate: string;
-      issuingAuthority: string;
-    }[];
-  }>(),
-  insuranceInfo: jsonb("insuranceInfo").$type<{
-    provider: string;
-    policyNumber: string;
-    expiryDate: string;
-    coverage: string;
-    documentId: number;
-  }>(),
-  businessInfo: jsonb("businessInfo").$type<{
-    companyName: string;
-    registrationNumber: string;
-    taxId: string;
-    website: string;
-    yearEstablished: number;
-    serviceAreas: string[];
-    registrationDocumentId: number;
-    taxDocumentId: number;
-    businessType: string;
-    employeeCount: number;
-    operatingHours: {
-      day: string;
-      open: string;
-      close: string;
-    }[];
-  }>(),
+
+  // Common fields for all user types
   location: jsonb("location").$type<{
     country: string;
     city: string;
@@ -72,9 +125,11 @@ export const users = pgTable("users", {
       longitude: number;
     };
   }>(),
+
   verificationStatus: text("verificationStatus", { 
     enum: ["unverified", "pending", "verified", "rejected"] 
   }).default("unverified"),
+
   notificationPreferences: jsonb("notificationPreferences").$type<{
     email: boolean;
     sms: boolean;
@@ -90,6 +145,7 @@ export const users = pgTable("users", {
     bookingReminders: true,
     paymentAlerts: true,
   }),
+
   privacySettings: jsonb("privacySettings").$type<{
     profileVisibility: "public" | "private" | "registered";
     contactInfoVisibility: "public" | "private" | "registered";
@@ -101,6 +157,7 @@ export const users = pgTable("users", {
     experienceVisibility: "registered",
     businessInfoVisibility: "registered",
   }),
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });

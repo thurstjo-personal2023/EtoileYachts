@@ -3,22 +3,79 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@/hooks/use-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { Loader2, Upload, UserCircle, Lock } from "lucide-react";
+import { Loader2, Upload, UserCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SelectUser } from "@db/schema";
+import { ConsumerProfileFields } from "@/components/profile/ConsumerProfileFields";
+import { ProducerProfileFields } from "@/components/profile/ProducerProfileFields";
+import { PartnerProfileFields } from "@/components/profile/PartnerProfileFields";
 
-// Matching schema types with database schema
+// Schema definitions for consumer profile
+const consumerProfileSchema = z.object({
+  // Basic Information
+  fullName: z.string().min(1, "Full name is required"),
+  email: z.string().email("Invalid email"),
+  phoneNumber: z.string().optional(),
+  bio: z.string().optional(),
+
+  // Demographics
+  dateOfBirth: z.date().optional(),
+  nationality: z.string().optional(),
+  gender: z.string().optional(),
+  occupation: z.string().optional(),
+
+  // Travel Preferences
+  travelPreferences: z.object({
+    preferredDestinations: z.array(z.string()).default([]),
+    travelFrequency: z.string().optional(),
+    typicalTripDuration: z.string().optional(),
+    budgetRange: z.object({
+      min: z.number(),
+      max: z.number(),
+      currency: z.string(),
+    }).optional(),
+    specialRequirements: z.array(z.string()).default([]),
+  }).default({}),
+
+  // Emergency Contact
+  emergencyContact: z.object({
+    name: z.string(),
+    relationship: z.string(),
+    phone: z.string(),
+    email: z.string().email("Invalid email"),
+    address: z.object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      country: z.string(),
+      postalCode: z.string(),
+    }).optional(),
+  }).optional(),
+
+  // Payment Methods
+  paymentMethods: z.array(z.object({
+    id: z.string(),
+    type: z.enum(["credit_card", "debit_card", "bank_account"]),
+    lastFourDigits: z.string(),
+    expiryDate: z.string().optional(),
+    isDefault: z.boolean(),
+    billingAddress: z.object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      country: z.string(),
+      postalCode: z.string(),
+    }),
+  })).default([]),
+});
+
+type ConsumerProfileData = z.infer<typeof consumerProfileSchema>;
+
+//Matching schema types with database schema
 const baseProfileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email"),
@@ -133,12 +190,14 @@ type BaseProfileData = z.infer<typeof baseProfileSchema>;
 type ProducerProfileData = z.infer<typeof producerProfileSchema>;
 type PartnerProfileData = z.infer<typeof partnerProfileSchema>;
 
-type ProfileFormData = BaseProfileData & Partial<ProducerProfileData> & Partial<PartnerProfileData>;
+type ProfileFormData = BaseProfileData & Partial<ProducerProfileData> & Partial<PartnerProfileData> & Partial<ConsumerProfileData>;
 
 async function updateProfile(data: ProfileFormData) {
   const response = await fetch("/api/users/profile", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(data),
     credentials: "include",
   });
@@ -150,198 +209,21 @@ async function updateProfile(data: ProfileFormData) {
   return response.json();
 }
 
-function BaseProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
-  return (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="fullName"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Full Name</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input {...field} type="email" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="phoneNumber"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Phone Number</FormLabel>
-            <FormControl>
-              <Input {...field} type="tel" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="dateOfBirth"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Date of Birth</FormLabel>
-            <FormControl>
-              <Calendar 
-                mode="single"
-                selected={field.value}
-                onSelect={field.onChange}
-                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                initialFocus
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Emergency Contact</h3>
-        <FormField
-          control={form.control}
-          name="emergencyContact.name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Contact Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Privacy Settings</h3>
-        <FormField
-          control={form.control}
-          name="privacySettings.profileVisibility"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Profile Visibility</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="public">Public</SelectItem>
-                  <SelectItem value="private">Private</SelectItem>
-                  <SelectItem value="registered">Registered Users Only</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ProducerProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Boating Experience</h3>
-        <FormField
-          control={form.control}
-          name="boatingExperience.yearsOfExperience"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Years of Experience</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  {...field} 
-                  onChange={e => field.onChange(parseInt(e.target.value))} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Insurance Information</h3>
-        <FormField
-          control={form.control}
-          name="insuranceInfo.provider"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Insurance Provider</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    </div>
-  );
-}
-
-function PartnerProfileFields({ form }: { form: ReturnType<typeof useForm<ProfileFormData>> }) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-4 border rounded-lg p-4">
-        <h3 className="font-medium">Business Information</h3>
-        <FormField
-          control={form.control}
-          name="businessInfo.companyName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function ProfilePage() {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState("basic");
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(
-      user?.userType === "producer" 
-        ? producerProfileSchema 
+      user?.userType === "producer"
+        ? producerProfileSchema
         : user?.userType === "partner"
           ? partnerProfileSchema
-          : baseProfileSchema
+          : user?.userType === "consumer"
+            ? consumerProfileSchema
+            : baseProfileSchema
     ),
     defaultValues: {
       fullName: user?.fullName || "",
@@ -403,6 +285,23 @@ export default function ProfilePage() {
           coverage: "",
           documentId: 0,
         },
+      }),
+      ...(user?.userType === "consumer" && {
+        gender: user?.gender || "",
+        occupation: user?.occupation || "",
+        travelPreferences: user?.travelPreferences || {
+          preferredDestinations: [],
+          travelFrequency: "",
+          typicalTripDuration: "",
+          budgetRange: {
+            min: 0,
+            max: 0,
+            currency: "USD",
+          },
+          specialRequirements: [],
+        },
+        emergencyContact: user?.emergencyContact,
+        paymentMethods: user?.paymentMethods || [],
       }),
     },
   });
@@ -505,47 +404,9 @@ export default function ProfilePage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  {user?.userType === "producer" && (
-                    <>
-                      <TabsTrigger value="experience">Experience</TabsTrigger>
-                      <TabsTrigger value="licenses">Licenses</TabsTrigger>
-                    </>
-                  )}
-                  {user?.userType === "partner" && (
-                    <>
-                      <TabsTrigger value="business">Business Info</TabsTrigger>
-                      <TabsTrigger value="service-areas">Service Areas</TabsTrigger>
-                    </>
-                  )}
-                  <TabsTrigger value="privacy">
-                    <Lock className="w-4 h-4 mr-2" />
-                    Privacy
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="space-y-4">
-                  <BaseProfileFields form={form} />
-                </TabsContent>
-
-                {user?.userType === "producer" && (
-                  <>
-                    <TabsContent value="experience" className="space-y-4">
-                      <ProducerProfileFields form={form} />
-                    </TabsContent>
-                  </>
-                )}
-
-                {user?.userType === "partner" && (
-                  <>
-                    <TabsContent value="business" className="space-y-4">
-                      <PartnerProfileFields form={form} />
-                    </TabsContent>
-                  </>
-                )}
-              </Tabs>
+              {user.userType === "consumer" && <ConsumerProfileFields form={form} />}
+              {user.userType === "producer" && <ProducerProfileFields form={form} />}
+              {user.userType === "partner" && <PartnerProfileFields form={form} />}
 
               <div className="flex justify-end">
                 <Button
