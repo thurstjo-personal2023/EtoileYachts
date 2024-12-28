@@ -11,7 +11,7 @@ if (!root) {
   throw new Error("Root element not found");
 }
 
-createRoot(root).render(
+const app = (
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
@@ -19,3 +19,5 @@ createRoot(root).render(
     </QueryClientProvider>
   </StrictMode>
 );
+
+createRoot(root).render(app);
