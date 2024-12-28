@@ -3,15 +3,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
-// Common types for reuse
-const addressSchema = {
-  street: text("street"),
-  city: text("city"),
-  state: text("state"),
-  country: text("country"),
-  postalCode: text("postalCode"),
-};
-
+// Table Declarations
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
@@ -25,22 +17,34 @@ export const users = pgTable("users", {
   profileImage: text("profileImage"),
   preferredLanguage: text("preferredLanguage").default("en"),
   bio: text("bio"),
+  gender: text("gender"),
+  occupation: text("occupation"),
 
   // Demographics
   dateOfBirth: date("dateOfBirth"),
   nationality: text("nationality"),
   identificationNumber: text("identificationNumber"),
-  gender: text("gender"),
-  occupation: text("occupation"),
 
-  // Account Preferences
-  communicationPreferences: jsonb("communicationPreferences").$type<{
-    preferredContactMethod: "email" | "phone" | "sms";
-    newsletterSubscription: boolean;
-    marketingCommunications: boolean;
-    eventNotifications: boolean;
+  // Location and Preferences
+  location: jsonb("location").$type<{
+    country: string;
+    city: string;
+    address: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  }>(),
+
+  notificationPreferences: jsonb("notificationPreferences").$type<{
+    email: boolean;
+    sms: boolean;
+    pushNotifications: boolean;
+    marketingEmails: boolean;
     bookingReminders: boolean;
+    paymentAlerts: boolean;
     specialOffers: boolean;
+    newsletterSubscription: boolean;
   }>(),
 
   // Travel and Experience Preferences
@@ -48,14 +52,14 @@ export const users = pgTable("users", {
     preferredDestinations: string[];
     travelFrequency: string;
     typicalTripDuration: string;
-    accommodationPreferences: string[];
-    activityInterests: string[];
     budgetRange: {
       min: number;
       max: number;
       currency: string;
     };
     specialRequirements: string[];
+    accommodationPreferences: string[];
+    activityInterests: string[];
     dietaryRestrictions: string[];
   }>(),
 
@@ -96,7 +100,13 @@ export const users = pgTable("users", {
     lastFourDigits: string;
     expiryDate?: string;
     isDefault: boolean;
-    billingAddress: typeof addressSchema;
+    billingAddress: {
+      street: string;
+      city: string;
+      state: string;
+      country: string;
+      postalCode: string;
+    };
   }>>(),
 
   // Emergency Contact
@@ -105,55 +115,31 @@ export const users = pgTable("users", {
     relationship: string;
     phone: string;
     email: string;
-    address: typeof addressSchema;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      country: string;
+      postalCode: string;
+    };
     alternateContact?: {
       name: string;
       phone: string;
     };
   }>(),
 
-  // Common fields for all user types
-  location: jsonb("location").$type<{
-    country: string;
-    city: string;
-    address: string;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
-    };
-  }>(),
-
-  verificationStatus: text("verificationStatus", { 
-    enum: ["unverified", "pending", "verified", "rejected"] 
-  }).default("unverified"),
-
-  notificationPreferences: jsonb("notificationPreferences").$type<{
-    email: boolean;
-    sms: boolean;
-    pushNotifications: boolean;
-    marketingEmails: boolean;
-    bookingReminders: boolean;
-    paymentAlerts: boolean;
-  }>().default({
-    email: true,
-    sms: false,
-    pushNotifications: true,
-    marketingEmails: false,
-    bookingReminders: true,
-    paymentAlerts: true,
-  }),
-
+  // Privacy Settings
   privacySettings: jsonb("privacySettings").$type<{
     profileVisibility: "public" | "private" | "registered";
     contactInfoVisibility: "public" | "private" | "registered";
     experienceVisibility: "public" | "private" | "registered";
     businessInfoVisibility: "public" | "private" | "registered";
-  }>().default({
-    profileVisibility: "registered",
-    contactInfoVisibility: "private",
-    experienceVisibility: "registered",
-    businessInfoVisibility: "registered",
-  }),
+  }>(),
+
+  // Verification and Timestamps
+  verificationStatus: text("verificationStatus", { 
+    enum: ["unverified", "pending", "verified", "rejected"] 
+  }).default("unverified"),
 
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
@@ -219,7 +205,7 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
-// Define relations
+// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
   services: many(services),
@@ -241,23 +227,21 @@ export const servicesRelations = relations(services, ({ one }) => ({
 }));
 
 export const bookingsRelations = relations(bookings, ({ one }) => ({
-    service: one(services, {
-        fields: [bookings.serviceId],
-        references: [services.id]
-    }),
-    consumer: one(users, {
-        fields: [bookings.consumerId],
-        references: [users.id]
-    })
-}))
+  service: one(services, {
+    fields: [bookings.serviceId],
+    references: [services.id],
+  }),
+  consumer: one(users, {
+    fields: [bookings.consumerId],
+    references: [users.id],
+  }),
+}));
 
-
+// Schema and Types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
-
-// Export types for frontend use
 export type UserProfile = SelectUser;
 
 export const insertDocumentSchema = createInsertSchema(documents);
