@@ -10,6 +10,9 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   fullName: text("full_name").notNull(),
   userType: text("user_type", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
+  role: text("role", { 
+    enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor"] 
+  }),
 
   // Basic Information
   phoneNumber: text("phone_number"),
@@ -36,9 +39,25 @@ export const users = pgTable("users", {
   // Professional Information (for producers)
   professionalInfo: jsonb("professional_info").$type<{
     yearsOfExperience: number;
-    qualifications: string[];
-    specializations: string[];
     languages: string[];
+    certifications: Array<{
+      type: string;
+      name: string;
+      issuer: string;
+      issueDate: string;
+      expiryDate?: string;
+      licenseNumber?: string;
+      verificationStatus: "pending" | "verified" | "expired";
+      documents?: string[];
+    }>;
+    specializations: string[];
+    qualifications: Array<{
+      title: string;
+      institution: string;
+      dateObtained: string;
+      description?: string;
+      documents?: string[];
+    }>;
     availability: {
       timezone: string;
       workingHours: Array<{
@@ -60,49 +79,14 @@ export const users = pgTable("users", {
     };
   }>().default({
     yearsOfExperience: 0,
-    qualifications: [],
-    specializations: [],
     languages: ["English"],
+    certifications: [],
+    specializations: [],
+    qualifications: [],
     availability: {
       timezone: "UTC",
       workingHours: [],
       vacationDates: []
-    }
-  }),
-
-  // Legal Information (for producers)
-  legalInfo: jsonb("legal_info").$type<{
-    businessRegistration?: {
-      number: string;
-      country: string;
-      expiryDate: string;
-    };
-    taxIdentification?: {
-      number: string;
-      country: string;
-    };
-    insurancePolicies: Array<{
-      type: string;
-      provider: string;
-      policyNumber: string;
-      coverage: number;
-      expiryDate: string;
-    }>;
-    complianceStatus: {
-      isCompliant: boolean;
-      lastVerified: string;
-      certificates: Array<{
-        type: string;
-        number: string;
-        expiryDate: string;
-      }>;
-    };
-  }>().default({
-    insurancePolicies: [],
-    complianceStatus: {
-      isCompliant: false,
-      lastVerified: new Date().toISOString(),
-      certificates: []
     }
   }),
 

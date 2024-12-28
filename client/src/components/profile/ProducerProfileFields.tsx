@@ -7,18 +7,30 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Plus, Shield, Anchor, Clock, FileText, Star, Upload } from "lucide-react";
+import { Plus, Shield, Book, Globe, Award } from "lucide-react";
 
 type ProducerProfileFieldsProps = {
   form: ReturnType<typeof useForm<any>>;
 };
 
 export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
+  const roles = [
+    { value: "yacht_owner", label: "Yacht Owner" },
+    { value: "captain", label: "Captain" },
+    { value: "facilitator", label: "Facilitator" },
+    { value: "crew_member", label: "Crew Member" },
+    { value: "instructor", label: "Instructor" }
+  ];
+
+  const commonLanguages = [
+    "English", "Spanish", "French", "German", "Italian", 
+    "Portuguese", "Russian", "Arabic", "Chinese", "Japanese"
+  ];
+
   return (
     <Tabs defaultValue="professional" className="w-full">
-      <TabsList className="grid grid-cols-3 lg:grid-cols-6">
-        <TabsTrigger value="professional">Professional</TabsTrigger>
+      <TabsList>
+        <TabsTrigger value="professional">Professional Information</TabsTrigger>
         <TabsTrigger value="legal">Legal</TabsTrigger>
         <TabsTrigger value="services">Services</TabsTrigger>
         <TabsTrigger value="availability">Availability</TabsTrigger>
@@ -26,12 +38,45 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
 
-      {/* Professional Information */}
       <TabsContent value="professional" className="space-y-6">
+        {/* Role Selection */}
         <div className="space-y-4">
           <h3 className="font-medium flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Professional Experience
+            Professional Role
+          </h3>
+
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Role</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {roles.map(role => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Years of Experience */}
+        <div className="space-y-4">
+          <h3 className="font-medium flex items-center gap-2">
+            <Book className="h-5 w-5 text-primary" />
+            Experience
           </h3>
 
           <FormField
@@ -43,107 +88,33 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
                 <FormControl>
                   <Input 
                     type="number" 
+                    min="0"
                     {...field} 
                     onChange={e => field.onChange(parseInt(e.target.value))} 
                   />
                 </FormControl>
+                <FormDescription>
+                  Total years of experience in maritime industry
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
 
-          <FormField
-            control={form.control}
-            name="professionalInfo.qualifications"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Qualifications</FormLabel>
-                <div className="flex flex-wrap gap-2">
-                  {field.value?.map((qual: string, index: number) => (
-                    <Badge key={index} variant="secondary">
-                      {qual}
-                      <button
-                        type="button"
-                        className="ml-1 hover:text-destructive"
-                        onClick={() => {
-                          const newQuals = [...field.value];
-                          newQuals.splice(index, 1);
-                          field.onChange(newQuals);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => {
-                      const qual = window.prompt("Enter qualification:");
-                      if (qual) {
-                        field.onChange([...(field.value || []), qual]);
-                      }
-                    }}
-                  >
-                    <Plus className="h-4 w-4" /> Add Qualification
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="professionalInfo.specializations"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Specializations</FormLabel>
-                <div className="flex flex-wrap gap-2">
-                  {field.value?.map((spec: string, index: number) => (
-                    <Badge key={index} variant="secondary">
-                      {spec}
-                      <button
-                        type="button"
-                        className="ml-1 hover:text-destructive"
-                        onClick={() => {
-                          const newSpecs = [...field.value];
-                          newSpecs.splice(index, 1);
-                          field.onChange(newSpecs);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => {
-                      const spec = window.prompt("Enter specialization:");
-                      if (spec) {
-                        field.onChange([...(field.value || []), spec]);
-                      }
-                    }}
-                  >
-                    <Plus className="h-4 w-4" /> Add Specialization
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Languages */}
+        <div className="space-y-4">
+          <h3 className="font-medium flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            Languages
+          </h3>
 
           <FormField
             control={form.control}
             name="professionalInfo.languages"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Languages</FormLabel>
+                <FormLabel>Languages Spoken</FormLabel>
                 <div className="flex flex-wrap gap-2">
                   {field.value?.map((lang: string, index: number) => (
                     <Badge key={index} variant="secondary">
@@ -161,20 +132,26 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
                       </button>
                     </Badge>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => {
-                      const lang = window.prompt("Enter language:");
-                      if (lang) {
-                        field.onChange([...(field.value || []), lang]);
+                  <Select
+                    onValueChange={(value) => {
+                      if (!field.value?.includes(value)) {
+                        field.onChange([...(field.value || []), value]);
                       }
                     }}
                   >
-                    <Plus className="h-4 w-4" /> Add Language
-                  </Button>
+                    <FormControl>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Add language" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {commonLanguages.map(lang => (
+                        <SelectItem key={lang} value={lang}>
+                          {lang}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <FormMessage />
               </FormItem>
@@ -182,70 +159,137 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           />
         </div>
 
+        {/* Certifications */}
         <div className="space-y-4">
           <h3 className="font-medium flex items-center gap-2">
-            <Star className="h-5 w-5 text-primary" />
-            Portfolio & Achievements
+            <Award className="h-5 w-5 text-primary" />
+            Certifications
           </h3>
 
-          <FormField
-            control={form.control}
-            name="professionalInfo.portfolio.description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Professional Summary</FormLabel>
-                <FormControl>
-                  <Textarea {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {form.watch("professionalInfo.certifications")?.map((cert: any, index: number) => (
+            <Card key={index} className="p-4">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name={`professionalInfo.certifications.${index}.type`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Certification Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="safety_training">Safety Training</SelectItem>
+                          <SelectItem value="maritime_license">Maritime License</SelectItem>
+                          <SelectItem value="special_permit">Special Permit</SelectItem>
+                          <SelectItem value="professional_certification">Professional Certification</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="professionalInfo.portfolio.achievements"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notable Achievements</FormLabel>
-                <div className="flex flex-wrap gap-2">
-                  {field.value?.map((achievement: string, index: number) => (
-                    <Badge key={index} variant="secondary">
-                      {achievement}
-                      <button
-                        type="button"
-                        className="ml-1 hover:text-destructive"
-                        onClick={() => {
-                          const newAchievements = [...field.value];
-                          newAchievements.splice(index, 1);
-                          field.onChange(newAchievements);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => {
-                      const achievement = window.prompt("Enter achievement:");
-                      if (achievement) {
-                        field.onChange([...(field.value || []), achievement]);
-                      }
-                    }}
-                  >
-                    <Plus className="h-4 w-4" /> Add Achievement
-                  </Button>
+                <FormField
+                  control={form.control}
+                  name={`professionalInfo.certifications.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Certification Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`professionalInfo.certifications.${index}.issueDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Issue Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`professionalInfo.certifications.${index}.expiryDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiry Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
+                <FormField
+                  control={form.control}
+                  name={`professionalInfo.certifications.${index}.licenseNumber`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>License/Certificate Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const certs = form.getValues("professionalInfo.certifications");
+                    certs.splice(index, 1);
+                    form.setValue("professionalInfo.certifications", certs);
+                  }}
+                >
+                  Remove Certification
+                </Button>
+              </div>
+            </Card>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-1"
+            onClick={() => {
+              const certs = form.getValues("professionalInfo.certifications") || [];
+              form.setValue("professionalInfo.certifications", [
+                ...certs,
+                {
+                  type: "",
+                  name: "",
+                  issuer: "",
+                  issueDate: "",
+                  verificationStatus: "pending"
+                }
+              ]);
+            }}
+          >
+            <Plus className="h-4 w-4" /> Add Certification
+          </Button>
         </div>
       </TabsContent>
+
 
       {/* Legal Information */}
       <TabsContent value="legal" className="space-y-6">
@@ -300,7 +344,6 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
 
         <div className="space-y-4">
           <h3 className="font-medium">Insurance Information</h3>
-
           {form.watch("legalInfo.insurancePolicies")?.map((policy: any, index: number) => (
             <Card key={index} className="p-4">
               <div className="space-y-4">
