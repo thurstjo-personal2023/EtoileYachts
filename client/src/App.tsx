@@ -8,10 +8,8 @@ import ServicesPage from "./pages/ServicesPage";
 import BookingsPage from "./pages/BookingsPage";
 import { useUser } from "./hooks/use-user";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./lib/queryClient";
 
-function AppRoutes() {
+function App() {
   const { user, isLoading } = useUser();
 
   if (isLoading) {
@@ -43,14 +41,6 @@ function AppRoutes() {
       </main>
       <Toaster />
     </div>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppRoutes />
-    </QueryClientProvider>
   );
 }
 
