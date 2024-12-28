@@ -34,7 +34,7 @@ export const users = pgTable("users", {
       latitude: number;
       longitude: number;
     };
-  }>(),
+  }>().default({}),
 
   notificationPreferences: jsonb("notificationPreferences").$type<{
     email: boolean;
@@ -45,7 +45,16 @@ export const users = pgTable("users", {
     paymentAlerts: boolean;
     specialOffers: boolean;
     newsletterSubscription: boolean;
-  }>(),
+  }>().default({
+    email: true,
+    sms: false,
+    pushNotifications: true,
+    marketingEmails: false,
+    bookingReminders: true,
+    paymentAlerts: true,
+    specialOffers: false,
+    newsletterSubscription: false
+  }),
 
   // Travel and Experience Preferences
   travelPreferences: jsonb("travelPreferences").$type<{
@@ -61,7 +70,16 @@ export const users = pgTable("users", {
     accommodationPreferences: string[];
     activityInterests: string[];
     dietaryRestrictions: string[];
-  }>(),
+  }>().default({
+    preferredDestinations: [],
+    travelFrequency: "",
+    typicalTripDuration: "",
+    budgetRange: { min: 0, max: 0, currency: "USD" },
+    specialRequirements: [],
+    accommodationPreferences: [],
+    activityInterests: [],
+    dietaryRestrictions: []
+  }),
 
   // Loyalty Program
   loyaltyProgram: jsonb("loyaltyProgram").$type<{
@@ -73,7 +91,16 @@ export const users = pgTable("users", {
     benefits: string[];
     tierExpiryDate: string;
     referralCode: string;
-  }>(),
+  }>().default({
+    memberId: "",
+    tier: "Bronze",
+    pointsBalance: 0,
+    joinDate: new Date().toISOString(),
+    lifetimePoints: 0,
+    benefits: [],
+    tierExpiryDate: "",
+    referralCode: ""
+  }),
 
   // Past Interactions
   pastInteractions: jsonb("pastInteractions").$type<{
@@ -91,7 +118,15 @@ export const users = pgTable("users", {
     }>;
     reviewsSubmitted: number;
     averageRating: number;
-  }>(),
+  }>().default({
+    totalBookings: 0,
+    completedTrips: 0,
+    favoriteServices: [],
+    savedSearches: [],
+    recentlyViewed: [],
+    reviewsSubmitted: 0,
+    averageRating: 0
+  }),
 
   // Payment Information
   paymentMethods: jsonb("paymentMethods").$type<Array<{
@@ -107,7 +142,7 @@ export const users = pgTable("users", {
       country: string;
       postalCode: string;
     };
-  }>>(),
+  }>>().default([]),
 
   // Emergency Contact
   emergencyContact: jsonb("emergencyContact").$type<{
@@ -126,7 +161,7 @@ export const users = pgTable("users", {
       name: string;
       phone: string;
     };
-  }>(),
+  }>().default({}),
 
   // Privacy Settings
   privacySettings: jsonb("privacySettings").$type<{
@@ -134,7 +169,12 @@ export const users = pgTable("users", {
     contactInfoVisibility: "public" | "private" | "registered";
     experienceVisibility: "public" | "private" | "registered";
     businessInfoVisibility: "public" | "private" | "registered";
-  }>(),
+  }>().default({
+    profileVisibility: "registered",
+    contactInfoVisibility: "private",
+    experienceVisibility: "registered",
+    businessInfoVisibility: "registered"
+  }),
 
   // Verification and Timestamps
   verificationStatus: text("verificationStatus", { 
