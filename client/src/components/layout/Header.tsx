@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { useUser } from "@/hooks/use-user";
 import { HoverWave, FloatingAnchor } from "@/components/ui/maritime-interactions";
+import { UserCircle } from "lucide-react";
 
 export function Header() {
   const { user, logout } = useUser();
@@ -37,6 +38,14 @@ export function Header() {
               <Link href="/dashboard">
                 <HoverWave>
                   <Button variant="ghost">Dashboard</Button>
+                </HoverWave>
+              </Link>
+              <Link href="/profile">
+                <HoverWave>
+                  <Button variant="ghost" className="gap-2">
+                    <UserCircle className="h-4 w-4" />
+                    Profile
+                  </Button>
                 </HoverWave>
               </Link>
               <HoverWave>
