@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,33 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Shield, LifeBuoy, Waves } from "lucide-react";
-
-const activityDetailsSchema = z.object({
-  types: z.array(z.object({
-    name: z.string(),
-    isOffered: z.boolean(),
-    description: z.string().optional()
-  })),
-  equipment: z.array(z.object({
-    name: z.string(),
-    description: z.string(),
-    quantity: z.number().min(1),
-    condition: z.enum(["new", "good", "fair"])
-  })),
-  safetyMeasures: z.array(z.object({
-    title: z.string(),
-    description: z.string(),
-    priority: z.enum(["high", "medium", "low"]),
-    requiredCertifications: z.array(z.string()).optional()
-  })),
-  instructions: z.array(z.object({
-    step: z.number(),
-    title: z.string(),
-    description: z.string(),
-    imageUrl: z.string().optional()
-  }))
-});
+import { Plus, Shield, Waves } from "lucide-react";
+import { activityDetailsSchema, type ActivityDetails } from "@/lib/types/activity";
 
 const defaultActivities = [
   { name: "Scuba Diving", isOffered: false },
@@ -45,12 +19,12 @@ const defaultActivities = [
 ];
 
 type ActivityDetailsFormProps = {
-  onSubmit: (data: z.infer<typeof activityDetailsSchema>) => void;
-  defaultValues?: z.infer<typeof activityDetailsSchema>;
+  onSubmit: (data: ActivityDetails) => void;
+  defaultValues?: ActivityDetails;
 };
 
 export function ActivityDetailsForm({ onSubmit, defaultValues }: ActivityDetailsFormProps) {
-  const form = useForm<z.infer<typeof activityDetailsSchema>>({
+  const form = useForm<ActivityDetails>({
     resolver: zodResolver(activityDetailsSchema),
     defaultValues: defaultValues || {
       types: defaultActivities,

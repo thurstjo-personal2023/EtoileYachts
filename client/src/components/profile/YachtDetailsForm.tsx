@@ -1,47 +1,21 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Anchor, Ship, Calendar as CalendarIcon } from "lucide-react";
-
-// Define the validation schema for yacht details
-const yachtDetailsSchema = z.object({
-  name: z.string().min(2, "Yacht name must be at least 2 characters"),
-  model: z.string().min(2, "Model must be at least 2 characters"),
-  year: z.number()
-    .min(1900, "Year must be after 1900")
-    .max(new Date().getFullYear() + 1, "Year cannot be in the future"),
-  capacity: z.number()
-    .min(1, "Capacity must be at least 1")
-    .max(500, "Capacity seems unusually high"),
-  features: z.object({
-    hasSpa: z.boolean(),
-    hasDiningArea: z.boolean(),
-    hasChildFriendlyAmenities: z.boolean(),
-    additionalFeatures: z.array(z.string())
-  }),
-  availability: z.array(z.object({
-    date: z.date(),
-    slots: z.array(z.object({
-      start: z.string(),
-      end: z.string(),
-      maxCapacity: z.number().optional()
-    }))
-  }))
-});
+import { Ship, Calendar as CalendarIcon } from "lucide-react";
+import { yachtDetailsSchema, type YachtDetails } from "@/lib/types/yacht";
 
 type YachtDetailsFormProps = {
-  onSubmit: (data: z.infer<typeof yachtDetailsSchema>) => void;
-  defaultValues?: z.infer<typeof yachtDetailsSchema>;
+  onSubmit: (data: YachtDetails) => void;
+  defaultValues?: YachtDetails;
 };
 
 export function YachtDetailsForm({ onSubmit, defaultValues }: YachtDetailsFormProps) {
-  const form = useForm<z.infer<typeof yachtDetailsSchema>>({
+  const form = useForm<YachtDetails>({
     resolver: zodResolver(yachtDetailsSchema),
     defaultValues: defaultValues || {
       name: "",
@@ -197,7 +171,7 @@ export function YachtDetailsForm({ onSubmit, defaultValues }: YachtDetailsFormPr
                 selected={form.watch("availability")?.map(a => a.date)}
                 onSelect={(dates) => {
                   if (!Array.isArray(dates)) return;
-                  
+
                   const availability = dates.map(date => ({
                     date,
                     slots: [
@@ -208,7 +182,7 @@ export function YachtDetailsForm({ onSubmit, defaultValues }: YachtDetailsFormPr
                       }
                     ]
                   }));
-                  
+
                   form.setValue("availability", availability);
                 }}
                 className="rounded-md border"
