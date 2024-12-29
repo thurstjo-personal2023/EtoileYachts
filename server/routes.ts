@@ -6,7 +6,6 @@ import bookingsRouter from "./routes/bookings";
 import userRouter from "./routes/users";
 import yachtRouter from "./routes/yachts";
 import activityRouter from "./routes/activities";
-import notificationsRouter from "./routes/notifications";
 
 export function registerRoutes(app: Express): Server {
   // Set up authentication routes and middleware first
@@ -18,7 +17,6 @@ export function registerRoutes(app: Express): Server {
   app.use("/api/users", userRouter);
   app.use("/api/yachts", yachtRouter);
   app.use("/api/activities", activityRouter);
-  app.use("/api/notifications", notificationsRouter);
 
   const httpServer = createServer(app);
   return httpServer;
