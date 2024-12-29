@@ -1,4 +1,3 @@
-```typescript
 import { type YachtDetails } from "@/lib/types/yacht";
 import {
   Card,
@@ -93,4 +92,3 @@ export function YachtCard({ yacht, onViewDetails, onBookNow }: YachtCardProps) {
     </Card>
   );
 }
-```
