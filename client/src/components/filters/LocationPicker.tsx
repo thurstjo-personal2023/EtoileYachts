@@ -7,6 +7,7 @@ import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@
 import { cn } from "@/lib/utils";
 import { MapPin, Loader2 } from "lucide-react";
 import { loadGoogleMapsScript } from "@/lib/loadGoogleMapsScript";
+import { Button } from "@/components/ui/button";
 
 interface LocationPickerProps {
   onLocationSelect: (location: { address: string; lat: number; lng: number }) => void;
@@ -18,6 +19,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [initAttempts, setInitAttempts] = useState(0);
 
   // Initialize Google Maps script
   useEffect(() => {
@@ -25,14 +27,22 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
     const initializeGoogleMaps = async () => {
       try {
-        // Log API key presence (not the actual value)
-        const hasApiKey = !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-        console.log("[LocationPicker] API Key available:", hasApiKey);
+        setIsInitializing(true);
+        setError(null);
 
-        console.log("[LocationPicker] Starting Maps initialization");
+        // Verify API key presence
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+          throw new Error("Google Maps API key is not configured");
+        }
+
+        console.log("[LocationPicker] Starting Maps initialization attempt", initAttempts + 1);
         await loadGoogleMapsScript();
 
         if (mounted) {
+          if (!(window as any).google?.maps?.places) {
+            throw new Error("Places API failed to initialize properly");
+          }
           console.log("[LocationPicker] Maps initialization successful");
           setIsScriptLoaded(true);
           setError(null);
@@ -40,7 +50,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
       } catch (err) {
         console.error('[LocationPicker] Maps initialization failed:', err);
         if (mounted) {
-          setError('Unable to initialize location services. Click Retry to try again.');
+          setError('Location services initialization failed. Please try again.');
           setIsScriptLoaded(false);
         }
       } finally {
@@ -50,12 +60,14 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
       }
     };
 
-    initializeGoogleMaps();
+    if (!isScriptLoaded && initAttempts < 3) {
+      initializeGoogleMaps();
+    }
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [initAttempts]);
 
   const {
     ready,
@@ -70,17 +82,6 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
       componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] }
     },
   });
-
-  // Debug logging
-  useEffect(() => {
-    console.log("[LocationPicker] State Update:", {
-      isScriptLoaded,
-      ready,
-      status,
-      resultsCount: data.length,
-      hasApiKey: !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-    });
-  }, [isScriptLoaded, ready, status, data]);
 
   const handleSelect = async (address: string) => {
     try {
@@ -99,10 +100,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
   const handleRetry = () => {
     console.log("[LocationPicker] Retrying initialization");
-    setIsInitializing(true);
-    setError(null);
-    setIsScriptLoaded(false);
-    window.location.reload(); // Force a full reload to reinitialize
+    setInitAttempts(prev => prev + 1);
   };
 
   if (isInitializing) {
@@ -118,14 +116,16 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
   if (error) {
     return (
-      <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-        {error}
-        <button 
+      <div className="p-3 text-sm border border-destructive/50 bg-destructive/10 rounded-md">
+        <p className="text-destructive">{error}</p>
+        <Button 
           onClick={handleRetry}
-          className="block mt-2 text-xs underline hover:no-underline"
+          variant="ghost"
+          size="sm"
+          className="mt-2 w-full"
         >
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -137,10 +137,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
           <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <CommandInput
             value={value}
-            onValueChange={(newValue) => {
-              console.log("[LocationPicker] Input changed:", newValue);
-              setValue(newValue);
-            }}
+            onValueChange={setValue}
             placeholder={placeholder}
             className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!ready}
@@ -149,7 +146,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
         {value && (
           <CommandList>
             <CommandEmpty className="py-6 text-center text-sm">
-              {!ready ? "Loading..." :
+              {!ready ? "Initializing..." :
                status === "ZERO_RESULTS" ? "No locations found." :
                status === "OK" ? "Type to search locations" :
                "Loading suggestions..."}
