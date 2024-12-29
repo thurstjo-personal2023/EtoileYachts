@@ -1,4 +1,3 @@
-```typescript
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,11 +45,19 @@ type FilterValues = z.infer<typeof filterSchema>;
 interface YachtFilterProps {
   onFilter: (values: FilterValues) => void;
   className?: string;
+  initialValues?: Partial<FilterValues>;
 }
 
-export function YachtFilter({ onFilter, className }: YachtFilterProps) {
-  const [priceRange, setPriceRange] = useState([0, 10000]);
-  const [lengthRange, setLengthRange] = useState([0, 100]);
+export function YachtFilter({ onFilter, className, initialValues }: YachtFilterProps) {
+  const [priceRange, setPriceRange] = useState([
+    initialValues?.priceRange?.min || 0,
+    initialValues?.priceRange?.max || 10000
+  ]);
+
+  const [lengthRange, setLengthRange] = useState([
+    initialValues?.length?.min || 0,
+    initialValues?.length?.max || 100
+  ]);
 
   const form = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -59,6 +66,7 @@ export function YachtFilter({ onFilter, className }: YachtFilterProps) {
       length: { min: lengthRange[0], max: lengthRange[1] },
       capacity: 1,
       features: [],
+      ...initialValues
     },
   });
 
@@ -79,21 +87,23 @@ export function YachtFilter({ onFilter, className }: YachtFilterProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Slider
-                        min={0}
-                        max={10000}
-                        step={100}
-                        value={priceRange}
-                        onValueChange={(value) => {
-                          setPriceRange(value);
-                          field.onChange({ min: value[0], max: value[1] });
-                        }}
-                      />
+                      <div className="space-y-4">
+                        <Slider
+                          min={0}
+                          max={10000}
+                          step={100}
+                          value={[priceRange[0], priceRange[1]]}
+                          onValueChange={(value) => {
+                            setPriceRange(value);
+                            field.onChange({ min: value[0], max: value[1] });
+                          }}
+                        />
+                        <div className="flex justify-between text-sm">
+                          <span>${priceRange[0]}</span>
+                          <span>${priceRange[1]}</span>
+                        </div>
+                      </div>
                     </FormControl>
-                    <div className="flex justify-between text-sm mt-2">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
-                    </div>
                   </FormItem>
                 )}
               />
@@ -109,21 +119,23 @@ export function YachtFilter({ onFilter, className }: YachtFilterProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={lengthRange}
-                        onValueChange={(value) => {
-                          setLengthRange(value);
-                          field.onChange({ min: value[0], max: value[1] });
-                        }}
-                      />
+                      <div className="space-y-4">
+                        <Slider
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={[lengthRange[0], lengthRange[1]]}
+                          onValueChange={(value) => {
+                            setLengthRange(value);
+                            field.onChange({ min: value[0], max: value[1] });
+                          }}
+                        />
+                        <div className="flex justify-between text-sm">
+                          <span>{lengthRange[0]}m</span>
+                          <span>{lengthRange[1]}m</span>
+                        </div>
+                      </div>
                     </FormControl>
-                    <div className="flex justify-between text-sm mt-2">
-                      <span>{lengthRange[0]}m</span>
-                      <span>{lengthRange[1]}m</span>
-                    </div>
                   </FormItem>
                 )}
               />
@@ -189,4 +201,3 @@ export function YachtFilter({ onFilter, className }: YachtFilterProps) {
     </Form>
   );
 }
-```

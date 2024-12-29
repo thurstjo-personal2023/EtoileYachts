@@ -6,17 +6,26 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Anchor, Users, Calendar } from "lucide-react";
+import { Anchor, Users, Calendar, Navigation } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface YachtCardProps {
   yacht: YachtDetails;
   onViewDetails?: () => void;
   onBookNow?: () => void;
+  variant?: 'default' | 'luxury' | 'compact';
+  className?: string;
 }
 
-export function YachtCard({ yacht, onViewDetails, onBookNow }: YachtCardProps) {
+export function YachtCard({ 
+  yacht, 
+  onViewDetails, 
+  onBookNow, 
+  variant = 'default',
+  className 
+}: YachtCardProps) {
   const {
     name,
     manufacturer,
@@ -24,18 +33,35 @@ export function YachtCard({ yacht, onViewDetails, onBookNow }: YachtCardProps) {
     capacity,
     baseDayRate,
     currency,
-    features
+    features,
+    currentLocation
   } = yacht;
 
   return (
-    <Card className="group hover:shadow-md transition-shadow duration-200">
+    <Card 
+      className={cn(
+        "group hover:shadow-md transition-shadow duration-200",
+        variant === 'luxury' && "border-secondary bg-gradient-to-br from-secondary/10 to-background",
+        variant === 'compact' && "max-w-sm",
+        className
+      )}
+    >
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Anchor className="h-5 w-5 text-primary" />
-          <CardTitle>{name}</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Anchor className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">{name}</CardTitle>
+          </div>
+          {currentLocation && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Navigation className="h-4 w-4" />
+              <span>Currently in {currentLocation}</span>
+            </div>
+          )}
         </div>
         <CardDescription>{manufacturer}</CardDescription>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm">
@@ -61,6 +87,11 @@ export function YachtCard({ yacht, onViewDetails, onBookNow }: YachtCardProps) {
                   Dining Area
                 </span>
               )}
+              {features.hasChildFriendlyAmenities && (
+                <span className="text-xs bg-secondary/10 text-secondary-foreground px-2 py-1 rounded">
+                  Child-Friendly
+                </span>
+              )}
             </div>
           )}
 
@@ -68,26 +99,31 @@ export function YachtCard({ yacht, onViewDetails, onBookNow }: YachtCardProps) {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">
-                {currency} {baseDayRate}/day
+                {currency} {baseDayRate.toLocaleString()}/day
               </span>
             </div>
           </div>
         </div>
       </CardContent>
+
       <CardFooter className="gap-2">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={onViewDetails}
-        >
-          View Details
-        </Button>
-        <Button
-          className="flex-1"
-          onClick={onBookNow}
-        >
-          Book Now
-        </Button>
+        {onViewDetails && (
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={onViewDetails}
+          >
+            View Details
+          </Button>
+        )}
+        {onBookNow && (
+          <Button
+            className="flex-1"
+            onClick={onBookNow}
+          >
+            Book Now
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
