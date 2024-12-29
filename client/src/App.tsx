@@ -7,6 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ServicesPage from "./pages/ServicesPage";
 import BookingsPage from "./pages/BookingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import YachtManagement from "./pages/YachtManagement";
 import { useUser } from "./hooks/use-user";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/services" component={ServicesPage} />
           <Route path="/bookings" component={BookingsPage} />
           <Route path="/profile" component={ProfilePage} />
+          <Route path="/yacht-management" component={YachtManagement} />
           <Route>
             <div className="flex items-center justify-center min-h-[50vh]">
               <div className="text-center">
