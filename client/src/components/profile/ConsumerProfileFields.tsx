@@ -44,7 +44,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="email"
@@ -58,7 +58,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="phoneNumber"
@@ -72,7 +72,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="bio"
@@ -109,7 +109,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="nationality"
@@ -123,7 +123,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="occupation"
@@ -154,7 +154,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="travelPreferences.travelFrequency"
@@ -178,7 +178,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="travelPreferences.budgetRange"
@@ -220,7 +220,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             <Gift className="h-5 w-5 text-primary" />
             <h3 className="font-medium">Loyalty Program Status</h3>
           </div>
-          
+
           <div className="grid gap-4">
             <FormField
               control={form.control}
@@ -234,7 +234,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="loyaltyProgram.tier"
@@ -247,7 +247,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="loyaltyProgram.pointsBalance"
@@ -271,7 +271,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             <Wallet className="h-5 w-5 text-primary" />
             <h3 className="font-medium">Payment Methods</h3>
           </div>
-          
+
           {/* Display existing payment methods */}
           {form.watch("paymentMethods")?.map((method: any, index: number) => (
             <Card key={method.id} className="p-4 mb-4">
@@ -306,7 +306,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
             <Phone className="h-5 w-5 text-primary" />
             <h3 className="font-medium">Emergency Contact</h3>
           </div>
-          
+
           <div className="grid gap-4">
             <FormField
               control={form.control}
@@ -321,7 +321,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="emergencyContact.relationship"
@@ -335,7 +335,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="emergencyContact.phone"
@@ -349,7 +349,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="emergencyContact.email"
@@ -360,6 +360,59 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                     <Input {...field} type="email" />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+      </TabsContent>
+
+      {/* Privacy Settings */}
+      <TabsContent value="privacy" className="space-y-4">
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-5 w-5 text-primary" />
+            <h3 className="font-medium">Privacy Settings</h3>
+          </div>
+
+          <div className="grid gap-6">
+            <FormField
+              control={form.control}
+              name="privacySettings.profileVisibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profile Visibility</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="registered">Registered Users Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notificationPreferences.email"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Email Notifications</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

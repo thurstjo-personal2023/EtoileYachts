@@ -32,8 +32,8 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
 
   return (
     <Tabs defaultValue="professional" className="w-full">
-      <TabsList>
-        <TabsTrigger value="professional">Professional Information</TabsTrigger>
+      <TabsList className="grid grid-cols-3 lg:grid-cols-8">
+        <TabsTrigger value="professional">Professional</TabsTrigger>
         <TabsTrigger value="legal">Legal</TabsTrigger>
         <TabsTrigger value="services">Services</TabsTrigger>
         <TabsTrigger value="yachts">Yachts</TabsTrigger>
@@ -44,7 +44,6 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
       </TabsList>
 
       <TabsContent value="professional" className="space-y-6">
-        {/* Role Selection */}
         <div className="space-y-4">
           <h3 className="font-medium flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -777,7 +776,6 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
             try {
               // Handle yacht details submission
               console.log("Yacht details:", data);
-              // TODO: Implement API call to save yacht details
             } catch (error) {
               console.error("Error saving yacht details:", error);
             }
@@ -791,12 +789,134 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
             try {
               // Handle activity details submission
               console.log("Activity details:", data);
-              // TODO: Implement API call to save activity details
             } catch (error) {
               console.error("Error saving activity details:", error);
             }
           }}
         />
+      </TabsContent>
+      <TabsContent value="services" className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="font-medium flex items-center gap-2">
+            <Award className="h-5 w-5 text-primary" />
+            Service Offerings
+          </h3>
+
+          <FormField
+            control={form.control}
+            name="services.description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Service Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe your services..."
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Provide a detailed description of the services you offer
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="services.serviceTypes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Service Types</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {field.value?.map((service: string, index: number) => (
+                    <Badge key={index} variant="secondary">
+                      {service}
+                      <button
+                        type="button"
+                        className="ml-1 hover:text-destructive"
+                        onClick={() => {
+                          const services = [...field.value];
+                          services.splice(index, 1);
+                          field.onChange(services);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                  <Select
+                    onValueChange={(value) => {
+                      if (!field.value?.includes(value)) {
+                        field.onChange([...(field.value || []), value]);
+                      }
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Add service type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="yacht_charter">Yacht Charter</SelectItem>
+                      <SelectItem value="sailing_lessons">Sailing Lessons</SelectItem>
+                      <SelectItem value="water_sports">Water Sports</SelectItem>
+                      <SelectItem value="guided_tours">Guided Tours</SelectItem>
+                      <SelectItem value="event_hosting">Event Hosting</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="services.pricing"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pricing Structure</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe your pricing structure..."
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Explain your pricing model, rates, and any special packages
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="services.cancellationPolicy"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cancellation Policy</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select policy" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="flexible">Flexible (24h)</SelectItem>
+                    <SelectItem value="moderate">Moderate (3 days)</SelectItem>
+                    <SelectItem value="strict">Strict (7 days)</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </TabsContent>
     </Tabs>
   );
