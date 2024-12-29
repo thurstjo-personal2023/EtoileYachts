@@ -25,6 +25,10 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
     const initializeGoogleMaps = async () => {
       try {
+        // Log API key presence (not the actual value)
+        const hasApiKey = !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        console.log("[LocationPicker] API Key available:", hasApiKey);
+
         console.log("[LocationPicker] Starting Maps initialization");
         await loadGoogleMapsScript();
 
@@ -73,7 +77,8 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
       isScriptLoaded,
       ready,
       status,
-      resultsCount: data.length
+      resultsCount: data.length,
+      hasApiKey: !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     });
   }, [isScriptLoaded, ready, status, data]);
 
