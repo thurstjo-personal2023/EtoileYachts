@@ -30,10 +30,14 @@ export const fetchUserBookings = createAsyncThunk(
       const response = await fetch('/api/bookings', {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch bookings');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to fetch bookings');
+      }
       return response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -48,10 +52,14 @@ export const createBooking = createAsyncThunk(
         credentials: 'include',
         body: JSON.stringify(bookingData),
       });
-      if (!response.ok) throw new Error('Failed to create booking');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create booking');
+      }
       return response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );

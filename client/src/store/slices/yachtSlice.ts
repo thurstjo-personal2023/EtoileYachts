@@ -22,10 +22,14 @@ export const fetchYachts = createAsyncThunk(
       const response = await fetch('/api/yachts', {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch yachts');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to fetch yachts');
+      }
       return response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -37,10 +41,14 @@ export const fetchYachtDetails = createAsyncThunk(
       const response = await fetch(`/api/yachts/${yachtId}`, {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch yacht details');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to fetch yacht details');
+      }
       return response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );
