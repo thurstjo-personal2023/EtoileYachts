@@ -16,11 +16,61 @@ export const users = pgTable("users", {
   verificationStatus: text("verification_status", {
     enum: ["unverified", "pending", "verified", "rejected"]
   }).default("unverified"),
+
+  // Profile fields
+  profileImage: text("profile_image"),
+  phoneNumber: text("phone_number"),
+  bio: text("bio"),
+  dateOfBirth: timestamp("date_of_birth"),
+  nationality: text("nationality"),
+  gender: text("gender"),
+  occupation: text("occupation"),
+
+  // Complex JSON fields
+  location: jsonb("location").$type<{
+    country: string;
+    city: string;
+    address: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  }>(),
+
+  notificationPreferences: jsonb("notification_preferences").$type<{
+    email: boolean;
+    sms: boolean;
+    pushNotifications: boolean;
+    marketingEmails: boolean;
+    bookingReminders: boolean;
+    paymentAlerts: boolean;
+  }>(),
+
+  privacySettings: jsonb("privacy_settings").$type<{
+    profileVisibility: "public" | "private" | "registered";
+    contactInfoVisibility: "public" | "private" | "registered";
+    experienceVisibility: "public" | "private" | "registered";
+    businessInfoVisibility: "public" | "private" | "registered";
+  }>(),
+
+  // Consumer-specific fields
+  travelPreferences: jsonb("travel_preferences").$type<{
+    preferredDestinations: string[];
+    travelFrequency?: string;
+    typicalTripDuration?: string;
+    budgetRange?: {
+      min: number;
+      max: number;
+      currency: string;
+    };
+    specialRequirements: string[];
+  }>(),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Enhanced Vessels/Yachts table
+// Vessels table
 export const vessels = pgTable("vessels", {
   id: serial("id").primaryKey(),
   ownerId: integer("owner_id").references(() => users.id).notNull(),
@@ -30,113 +80,27 @@ export const vessels = pgTable("vessels", {
   year: integer("year").notNull(),
   registrationNumber: text("registration_number"),
   flagState: text("flag_state"),
-
-  // Technical Specifications
-  length: decimal("length").notNull(), // Length Overall (LOA) in meters
-  beam: decimal("beam").notNull(), // Width at widest point in meters
-  draft: decimal("draft").notNull(), // Draft in meters
-  grossTonnage: integer("gross_tonnage"), // Gross tonnage
-  cruisingSpeed: integer("cruising_speed"), // Speed in knots
-  maxSpeed: integer("max_speed"), // Maximum speed in knots
-  fuelCapacity: integer("fuel_capacity"), // Fuel capacity in liters
-  waterCapacity: integer("water_capacity"), // Fresh water capacity in liters
-
-  // Engine and Performance
+  length: decimal("length").notNull(),
+  beam: decimal("beam").notNull(),
+  draft: decimal("draft").notNull(),
+  grossTonnage: integer("gross_tonnage"),
+  cruisingSpeed: integer("cruising_speed"),
+  maxSpeed: integer("max_speed"),
+  fuelCapacity: integer("fuel_capacity"),
+  waterCapacity: integer("water_capacity"),
   engineDetails: jsonb("engine_details").$type<{
     manufacturer: string;
     model: string;
-    power: number; // Power in HP
+    power: number;
     hours: number;
     yearInstalled: number;
     lastServiced: string;
   }>(),
-
-  // Accommodation
-  capacity: integer("capacity").notNull(), // Maximum number of guests
-  cabins: integer("cabins").notNull(), // Number of cabins
-  berths: integer("berths").notNull(), // Number of berths
-  crew: integer("crew"), // Number of crew members
-
-  // Features and Amenities
-  features: jsonb("features").$type<{
-    hasSpa: boolean;
-    hasDiningArea: boolean;
-    hasChildFriendlyAmenities: boolean;
-    waterToys: string[];
-    entertainment: string[];
-    navigation: string[];
-    safety: string[];
-    additionalFeatures: string[];
-  }>().notNull().default({
-    hasSpa: false,
-    hasDiningArea: false,
-    hasChildFriendlyAmenities: false,
-    waterToys: [],
-    entertainment: [],
-    navigation: [],
-    safety: [],
-    additionalFeatures: []
-  }),
-
-  // Layout and Interior
-  layout: jsonb("layout").$type<{
-    deckPlans: {
-      deck: string;
-      description: string;
-      areas: Array<{
-        name: string;
-        type: string;
-        features: string[];
-      }>;
-    }[];
-    interiorDesigner?: string;
-    lastRefitted?: string;
-  }>(),
-
-  // Safety and Certificates
-  certificates: jsonb("certificates").$type<Array<{
-    type: string;
-    number: string;
-    issueDate: string;
-    expiryDate: string;
-    issuingAuthority: string;
-  }>>().default([]),
-
-  // Availability and Booking
-  availability: jsonb("availability").$type<Array<{
-    date: Date;
-    slots: Array<{
-      start: string;
-      end: string;
-      maxCapacity: number;
-    }>;
-  }>>().default([]),
-
-  // Location and Area of Operation
-  homePort: text("home_port"),
-  cruisingAreas: jsonb("cruising_areas").$type<string[]>().default([]),
-  currentLocation: jsonb("current_location").$type<{
-    lat: number;
-    lng: number;
-    lastUpdated: string;
-  }>(),
-
-  // Status and Maintenance
   status: text("status", {
     enum: ["available", "maintenance", "booked", "inactive"]
   }).notNull().default("available"),
   lastMaintenanceDate: timestamp("last_maintenance_date"),
   nextMaintenanceDate: timestamp("next_maintenance_date"),
-
-  // Pricing and Charter
-  charterType: text("charter_type", {
-    enum: ["crewed", "bareboat", "cabin"]
-  }).notNull(),
-  baseDayRate: decimal("base_day_rate").notNull(),
-  baseWeekRate: decimal("base_week_rate").notNull(),
-  currency: text("currency").notNull().default("USD"),
-
-  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -148,29 +112,6 @@ export const activities = pgTable("activities", {
   providerId: integer("provider_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  activityTypes: jsonb("activity_types").$type<Array<{
-    name: string;
-    isOffered: boolean;
-    description?: string;
-  }>>().notNull().default([]),
-  equipment: jsonb("equipment").$type<Array<{
-    name: string;
-    description: string;
-    quantity: number;
-    condition: "new" | "good" | "fair";
-  }>>().notNull().default([]),
-  safetyMeasures: jsonb("safety_measures").$type<Array<{
-    title: string;
-    description: string;
-    priority: "high" | "medium" | "low";
-    requiredCertifications?: string[];
-  }>>().notNull().default([]),
-  instructions: jsonb("instructions").$type<Array<{
-    step: number;
-    title: string;
-    description: string;
-    imageUrl?: string;
-  }>>().notNull().default([]),
   status: text("status", {
     enum: ["active", "inactive"]
   }).notNull().default("active"),
@@ -210,7 +151,7 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Define all relations in one place
+// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   ownedVessels: many(vessels),
   providedActivities: many(activities),
@@ -272,24 +213,22 @@ export const selectVesselSchema = createSelectSchema(vessels);
 export type InsertVessel = typeof vessels.$inferInsert;
 export type SelectVessel = typeof vessels.$inferSelect;
 
-// Service schemas (alias for vessels)
-export const services = vessels;
-export const insertServiceSchema = insertVesselSchema;
-export const selectServiceSchema = selectVesselSchema;
-export type InsertService = InsertVessel;
-export type SelectService = SelectVessel;
-
 export const insertActivitySchema = createInsertSchema(activities);
 export const selectActivitySchema = createSelectSchema(activities);
 export type InsertActivity = typeof activities.$inferInsert;
 export type SelectActivity = typeof activities.$inferSelect;
+
+export const insertBookingSchema = createInsertSchema(bookings);
+export const selectBookingSchema = createSelectSchema(bookings);
+export type InsertBooking = typeof bookings.$inferInsert;
+export type SelectBooking = typeof bookings.$inferSelect;
 
 export const insertReviewSchema = createInsertSchema(reviews);
 export const selectReviewSchema = createSelectSchema(reviews);
 export type InsertReview = typeof reviews.$inferInsert;
 export type SelectReview = typeof reviews.$inferSelect;
 
-export const insertBookingSchema = createInsertSchema(bookings);
-export const selectBookingSchema = createSelectSchema(bookings);
-export type InsertBooking = typeof bookings.$inferInsert;
-export type SelectBooking = typeof bookings.$inferSelect;
+// Services alias (for consistency with frontend naming)
+export const services = vessels;
+export type InsertService = InsertVessel;
+export type SelectService = SelectVessel;

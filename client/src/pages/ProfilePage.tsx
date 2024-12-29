@@ -13,8 +13,265 @@ import type { SelectUser } from "@db/schema";
 import { ConsumerProfileFields } from "@/components/profile/ConsumerProfileFields";
 import { ProducerProfileFields } from "@/components/profile/ProducerProfileFields";
 import { PartnerProfileFields } from "@/components/profile/PartnerProfileFields";
+import React from 'react';
 
-// Schema definitions for form validation
+// Enhanced error boundary with proper types
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 rounded-md bg-destructive/10 text-destructive">
+          <h2>Something went wrong</h2>
+          <Button onClick={() => this.setState({ hasError: false })}>Try again</Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Extended User type to include additional profile fields
+interface ExtendedUser extends SelectUser {
+  profileImage?: string;
+  phoneNumber?: string;
+  bio?: string;
+  dateOfBirth?: Date;
+  nationality?: string;
+  gender?: string;
+  occupation?: string;
+  location?: {
+    country: string;
+    city: string;
+    address: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    pushNotifications: boolean;
+    marketingEmails: boolean;
+    bookingReminders: boolean;
+    paymentAlerts: boolean;
+  };
+  privacySettings?: {
+    profileVisibility: "public" | "private" | "registered";
+    contactInfoVisibility: "public" | "private" | "registered";
+    experienceVisibility: "public" | "private" | "registered";
+    businessInfoVisibility: "public" | "private" | "registered";
+  };
+}
+
+export default function ProfilePage() {
+  const { user } = useUser() as { user: ExtendedUser | undefined };
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  console.log("[ProfilePage] Rendering with user type:", user?.userType);
+
+  const form = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      fullName: user?.fullName || "",
+      email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
+      bio: user?.bio || "",
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
+      nationality: user?.nationality || "",
+      gender: user?.gender || "",
+      occupation: user?.occupation || "",
+      location: user?.location,
+      notificationPreferences: user?.notificationPreferences,
+      privacySettings: user?.privacySettings,
+      travelPreferences: user?.travelPreferences,
+      paymentMethods: user?.paymentMethods || [],
+      emergencyContact: user?.emergencyContact,
+      boatingLicenses: user?.boatingLicenses || [],
+      boatingExperience: user?.boatingExperience || {
+        yearsOfExperience: 0,
+        vesselTypes: [],
+        certifications: [],
+        safetyTraining: [],
+      },
+      insuranceInfo: user?.insuranceInfo || {
+        provider: "",
+        policyNumber: "",
+        expiryDate: "",
+        coverage: "",
+        documentId: 0,
+      },
+      businessInfo: user?.businessInfo || {
+        companyName: "",
+        registrationNumber: "",
+        taxId: "",
+        website: "",
+        yearEstablished: new Date().getFullYear(),
+        serviceAreas: [],
+        operatingHours: [],
+        registrationDocumentId: 0,
+        taxDocumentId: 0,
+        businessType: "",
+        employeeCount: 0,
+      },
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: updateProfile,
+    onMutate: () => {
+      setIsSubmitting(true);
+      console.log("[ProfilePage] Starting profile update");
+    },
+    onSuccess: () => {
+      console.log("[ProfilePage] Profile update successful");
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("[ProfilePage] Profile update failed:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    },
+  });
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      console.log("[ProfilePage] Starting image upload");
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/users/profile/image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      console.log("[ProfilePage] Image upload successful");
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast({
+        title: "Success",
+        description: "Profile image updated successfully",
+      });
+    } catch (error) {
+      console.error("[ProfilePage] Image upload failed:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <ErrorBoundary>
+      <div className="container max-w-4xl py-16">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <div className="flex items-center justify-center">
+                <div className="relative">
+                  {(imagePreview || user?.profileImage) ? (
+                    <img
+                      src={imagePreview || user?.profileImage || ''}
+                      alt={user?.fullName || 'Profile'}
+                      className="w-32 h-32 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserCircle className="w-32 h-32 text-muted-foreground" />
+                  )}
+                  <label
+                    htmlFor="profile-image"
+                    className="absolute bottom-0 right-0 p-1 rounded-full bg-primary text-primary-foreground cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <input
+                      type="file"
+                      id="profile-image"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
+                {user.userType === "consumer" && <ConsumerProfileFields form={form} />}
+                {user.userType === "producer" && <ProducerProfileFields form={form} />}
+                {user.userType === "partner" && <PartnerProfileFields form={form} />}
+
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    className="w-full md:w-auto"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
+  );
+}
+
 const profileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email"),
@@ -158,177 +415,4 @@ async function updateProfile(data: ProfileFormData) {
   }
 
   return response.json();
-}
-
-export default function ProfilePage() {
-  const { user } = useUser();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
-
-  const form = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      fullName: user?.fullName || "",
-      email: user?.email || "",
-      phoneNumber: user?.phoneNumber || "",
-      bio: user?.bio || "",
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
-      nationality: user?.nationality || "",
-      gender: user?.gender || "",
-      occupation: user?.occupation || "",
-      location: user?.location,
-      notificationPreferences: user?.notificationPreferences,
-      privacySettings: user?.privacySettings,
-      travelPreferences: user?.travelPreferences,
-      paymentMethods: user?.paymentMethods || [],
-      emergencyContact: user?.emergencyContact,
-      boatingLicenses: user?.boatingLicenses || [],
-      boatingExperience: user?.boatingExperience || {
-        yearsOfExperience: 0,
-        vesselTypes: [],
-        certifications: [],
-        safetyTraining: [],
-      },
-      insuranceInfo: user?.insuranceInfo || {
-        provider: "",
-        policyNumber: "",
-        expiryDate: "",
-        coverage: "",
-        documentId: 0,
-      },
-      businessInfo: user?.businessInfo || {
-        companyName: "",
-        registrationNumber: "",
-        taxId: "",
-        website: "",
-        yearEstablished: new Date().getFullYear(),
-        serviceAreas: [],
-        operatingHours: [],
-        registrationDocumentId: 0,
-        taxDocumentId: 0,
-        businessType: "",
-        employeeCount: 0,
-      },
-    },
-  });
-
-  const mutation = useMutation({
-    mutationFn: updateProfile,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update profile",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await fetch("/api/users/profile/image", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-      toast({
-        title: "Success",
-        description: "Profile image updated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to upload image",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (!user) {
-    return null;
-  }
-
-  return (
-    <div className="container max-w-4xl py-16">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6">
-            <div className="flex items-center justify-center">
-              <div className="relative">
-                {(imagePreview || user?.profileImage) ? (
-                  <img
-                    src={imagePreview || user?.profileImage || ''}
-                    alt={user?.fullName || 'Profile'}
-                    className="w-32 h-32 rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircle className="w-32 h-32 text-muted-foreground" />
-                )}
-                <label
-                  htmlFor="profile-image"
-                  className="absolute bottom-0 right-0 p-1 rounded-full bg-primary text-primary-foreground cursor-pointer"
-                >
-                  <Upload className="w-4 h-4" />
-                  <input
-                    type="file"
-                    id="profile-image"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
-              {user.userType === "consumer" && <ConsumerProfileFields form={form} />}
-              {user.userType === "producer" && <ProducerProfileFields form={form} />}
-              {user.userType === "partner" && <PartnerProfileFields form={form} />}
-
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  className="w-full md:w-auto"
-                  disabled={mutation.isPending}
-                >
-                  {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
