@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Search, Home, Calendar, User, Menu } from "lucide-react";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -10,6 +10,12 @@ interface MobileLayoutProps {
 export function MobileLayout({ children }: MobileLayoutProps) {
   const [location] = useLocation();
 
+  useEffect(() => {
+    // Add debug logging
+    console.log("MobileLayout rendered, current location:", location);
+    console.log("Attempting to load logo from:", "/etoile-yachts-logo.png");
+  }, [location]);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Navigation with Logo and Search */}
@@ -20,15 +26,18 @@ export function MobileLayout({ children }: MobileLayoutProps) {
               src="/etoile-yachts-logo.png"
               alt="Etoile Yachts"
               className="h-8 w-auto"
+              onError={(e) => {
+                console.error("Error loading logo:", e);
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </Link>
           <SearchBar
             onSearch={(query) => {
-              // TODO: Implement search handler
-              console.log("Searching:", query);
+              console.log("Search query:", query);
             }}
             onSelect={(result) => {
-              // TODO: Handle selection based on result type
+              console.log("Selected result:", result);
               if (result.type === 'yacht') {
                 window.location.href = `/yachts/${result.id}`;
               } else if (result.type === 'location') {
@@ -44,6 +53,7 @@ export function MobileLayout({ children }: MobileLayoutProps) {
           <button
             className="ml-auto rounded-md p-2 hover:bg-accent"
             aria-label="Menu"
+            onClick={() => console.log("Menu button clicked")}
           >
             <Menu className="h-5 w-5" />
           </button>
