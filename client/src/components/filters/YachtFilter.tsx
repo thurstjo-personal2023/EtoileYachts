@@ -8,7 +8,6 @@ import {
   FormField,
   FormItem,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,11 +23,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
-import { SearchBar } from "@/components/search/SearchBar";
 import { useQuery } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LocationPicker } from "./LocationPicker";
-import { useLoadScript } from "@react-google-maps/api";
 
 // Enhanced filter schema with search
 const filterSchema = z.object({
@@ -101,22 +98,11 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
     }
   });
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
-    libraries: ["places"],
-    region: "EU",
-  });
-
-  if (loadError) {
-    console.error("Error loading Google Maps:", loadError);
-  }
-
   const [selectedLocation, setSelectedLocation] = useState<{
     address: string;
     lat: number;
     lng: number;
   } | null>(null);
-
 
   const form = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -242,6 +228,27 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
               </AccordionContent>
             </AccordionItem>
 
+            <AccordionItem value="location">
+              <AccordionTrigger>Location</AccordionTrigger>
+              <AccordionContent>
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <LocationPicker
+                          onLocationSelect={(location) => {
+                            field.onChange(location.address);
+                          }}
+                          placeholder="Search for a location..."
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
             <AccordionItem value="length">
               <AccordionTrigger>Yacht Length</AccordionTrigger>
               <AccordionContent>
@@ -273,7 +280,6 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                 />
               </AccordionContent>
             </AccordionItem>
-
             <AccordionItem value="capacity">
               <AccordionTrigger>Guest Capacity</AccordionTrigger>
               <AccordionContent>
@@ -304,41 +310,7 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                 />
               </AccordionContent>
             </AccordionItem>
-
-            <AccordionItem value="location">
-              <AccordionTrigger>Location</AccordionTrigger>
-              <AccordionContent>
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        {loadError ? (
-                          <div className="text-sm text-destructive p-2 rounded-md bg-destructive/10">
-                            Failed to load location picker. Please try again later.
-                          </div>
-                        ) : !isLoaded ? (
-                          <div className="flex items-center justify-center h-11 bg-muted rounded-md">
-                            <span className="text-sm text-muted-foreground">Loading map...</span>
-                          </div>
-                        ) : (
-                          <LocationPicker
-                            onLocationSelect={(location) => {
-                              setSelectedLocation(location);
-                              field.onChange(location.address);
-                            }}
-                            placeholder="Search for a location..."
-                          />
-                        )}
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </AccordionContent>
-            </AccordionItem>
           </Accordion>
-
           <Button type="submit" className="w-full mt-4">
             Apply Filters
           </Button>

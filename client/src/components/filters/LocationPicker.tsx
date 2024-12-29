@@ -6,6 +6,7 @@ import usePlacesAutocomplete, {
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { MapPin } from "lucide-react";
+import { loadGoogleMapsScript } from "@/lib/loadGoogleMapsScript";
 
 interface LocationPickerProps {
   onLocationSelect: (location: { address: string; lat: number; lng: number }) => void;
@@ -14,6 +15,18 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({ onLocationSelect, className, placeholder = "Search location..." }: LocationPickerProps) {
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadGoogleMapsScript()
+      .then(() => setIsScriptLoaded(true))
+      .catch((err) => {
+        console.error('Failed to load Google Maps:', err);
+        setError('Failed to load location services. Please try again later.');
+      });
+  }, []);
+
   const {
     ready,
     value,
@@ -21,13 +34,13 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
-    callbackName: "initMap",
     requestOptions: {
-      /* Restrict to yacht-friendly locations */
       types: ['(cities)', 'establishment', 'geocode'],
       componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] } // Major yacht destinations
     },
     debounce: 300,
+    cache: 86400,
+    enabled: isScriptLoaded,
   });
 
   const handleSelect = async (address: string) => {
@@ -40,23 +53,14 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
       onLocationSelect({ address, lat, lng });
     } catch (error) {
       console.error("Error selecting location:", error);
+      setError("Failed to get location details. Please try a different location.");
     }
   };
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Verify Google Maps API is properly loaded
-    if (!(window as any).google?.maps) {
-      setErrorMessage("Google Maps not loaded. Please check your API key configuration.");
-      console.error("Google Maps API not loaded");
-    }
-  }, []);
-
-  if (errorMessage) {
+  if (error) {
     return (
       <div className="text-sm text-destructive p-2 rounded-md bg-destructive/10">
-        {errorMessage}
+        {error}
       </div>
     );
   }
@@ -77,9 +81,10 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
         {value && (
           <CommandList>
             <CommandEmpty className="py-6 text-center text-sm">
-              {status === "ZERO_RESULTS" ? "No locations found." : 
-               !ready ? "Loading..." : 
-               "Type to search locations"}
+              {!ready ? "Loading..." :
+               status === "ZERO_RESULTS" ? "No locations found." :
+               status === "OK" ? "Type to search locations" :
+               "Loading suggestions..."}
             </CommandEmpty>
             {status === "OK" &&
               data.map(({ place_id, description }) => (
