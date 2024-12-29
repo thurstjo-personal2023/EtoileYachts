@@ -7,7 +7,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useQuery } from "@tanstack/react-query";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Enhanced filter schema with search
 const filterSchema = z.object({
@@ -43,6 +43,10 @@ const filterSchema = z.object({
   features: z.array(z.string()),
   location: z.string().optional(),
   activityTypes: z.array(z.string()).default([]),
+  availability: z.object({
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  }).optional(),
 });
 
 type FilterValues = z.infer<typeof filterSchema>;
@@ -60,6 +64,17 @@ const ACTIVITY_TYPES = [
   'Special Occasions',
   'Water Sports',
   'Fishing',
+];
+
+const FEATURES = [
+  'Crew Included',
+  'WiFi',
+  'Air Conditioning',
+  'Water Toys',
+  'Jacuzzi',
+  'Swimming Pool',
+  'Gym',
+  'Cinema Room',
 ];
 
 export function YachtFilter({ onFilter, className, initialValues }: YachtFilterProps) {
@@ -105,28 +120,6 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className={className}>
         <div className="space-y-6">
-          <FormField
-            control={form.control}
-            name="search"
-            render={({ field }) => (
-              <FormItem>
-                <SearchBar
-                  placeholder="Search yachts and locations..."
-                  onSearch={(query) => field.onChange(query)}
-                  onSelect={(result) => {
-                    field.onChange(result.title);
-                    if (result.type === 'location') {
-                      form.setValue('location', result.title);
-                    }
-                  }}
-                  results={searchResults}
-                  isLoading={isSearching}
-                  className="w-full"
-                />
-              </FormItem>
-            )}
-          />
-
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="price">
               <AccordionTrigger>Price Range</AccordionTrigger>
@@ -160,6 +153,41 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
               </AccordionContent>
             </AccordionItem>
 
+            <AccordionItem value="features">
+              <AccordionTrigger>Features</AccordionTrigger>
+              <AccordionContent>
+                <FormField
+                  control={form.control}
+                  name="features"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="grid grid-cols-2 gap-2">
+                          {FEATURES.map((feature) => (
+                            <label
+                              key={feature}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={field.value?.includes(feature)}
+                                onCheckedChange={(checked) => {
+                                  const newValue = checked
+                                    ? [...(field.value || []), feature]
+                                    : field.value?.filter((v) => v !== feature) || [];
+                                  field.onChange(newValue);
+                                }}
+                              />
+                              <span className="text-sm">{feature}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
+
             <AccordionItem value="activities">
               <AccordionTrigger>Activity Types</AccordionTrigger>
               <AccordionContent>
@@ -173,18 +201,16 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                           {ACTIVITY_TYPES.map((activity) => (
                             <label
                               key={activity}
-                              className="flex items-center gap-2 cursor-pointer"
+                              className="flex items-center space-x-2"
                             >
-                              <input
-                                type="checkbox"
-                                checked={field.value.includes(activity)}
-                                onChange={(e) => {
-                                  const newValue = e.target.checked
-                                    ? [...field.value, activity]
-                                    : field.value.filter((v) => v !== activity);
+                              <Checkbox
+                                checked={field.value?.includes(activity)}
+                                onCheckedChange={(checked) => {
+                                  const newValue = checked
+                                    ? [...(field.value || []), activity]
+                                    : field.value?.filter((v) => v !== activity) || [];
                                   field.onChange(newValue);
                                 }}
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
                               />
                               <span className="text-sm">{activity}</span>
                             </label>
@@ -246,33 +272,13 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                             <SelectValue placeholder="Select capacity" />
                           </SelectTrigger>
                           <SelectContent>
-                            {[2, 4, 6, 8, 10, 12].map((num) => (
+                            {[2, 4, 6, 8, 10, 12, 14, 16].map((num) => (
                               <SelectItem key={num} value={num.toString()}>
                                 {num} guests
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="location">
-              <AccordionTrigger>Location</AccordionTrigger>
-              <AccordionContent>
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter location"
-                          {...field}
-                        />
                       </FormControl>
                     </FormItem>
                   )}
