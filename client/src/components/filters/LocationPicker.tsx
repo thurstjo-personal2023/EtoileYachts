@@ -20,7 +20,10 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
   useEffect(() => {
     loadGoogleMapsScript()
-      .then(() => setIsScriptLoaded(true))
+      .then(() => {
+        console.log("Google Maps script loaded successfully");
+        setIsScriptLoaded(true);
+      })
       .catch((err) => {
         console.error('Failed to load Google Maps:', err);
         setError('Failed to load location services. Please try again later.');
@@ -34,14 +37,19 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
+    initOnMount: isScriptLoaded,
+    debounce: 300,
     requestOptions: {
       types: ['(cities)', 'establishment', 'geocode'],
-      componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] } // Major yacht destinations
+      componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] }
     },
-    debounce: 300,
-    cache: 86400,
-    enabled: isScriptLoaded,
   });
+
+  useEffect(() => {
+    if (status) {
+      console.log("Places API Status:", status, "Data:", data);
+    }
+  }, [status, data]);
 
   const handleSelect = async (address: string) => {
     setValue(address, false);
@@ -50,6 +58,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
+      console.log("Selected location:", { address, lat, lng });
       onLocationSelect({ address, lat, lng });
     } catch (error) {
       console.error("Error selecting location:", error);
@@ -72,7 +81,10 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
           <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <CommandInput
             value={value}
-            onValueChange={setValue}
+            onValueChange={(newValue) => {
+              console.log("Input value changed:", newValue);
+              setValue(newValue);
+            }}
             placeholder={placeholder}
             className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!ready}
