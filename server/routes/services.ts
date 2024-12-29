@@ -1,42 +1,18 @@
 import { Router } from "express";
 import { db } from "@db";
 import { services, insertServiceSchema } from "@db/schema";
-import { eq, and, between } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
-// Get all services with optional filtering
+// Get all services
 router.get("/", async (req, res) => {
   try {
-    const { type, location, priceRange } = req.query;
-
-    const query = db.query.services.findMany({
-      where: and(
-        type ? eq(services.type, type as string) : undefined,
-        location ? and(
-          between(
-            sql`${services.location}->>'lat'`,
-            (JSON.parse(location as string).lat - JSON.parse(location as string).radius).toString(),
-            (JSON.parse(location as string).lat + JSON.parse(location as string).radius).toString()
-          ),
-          between(
-            sql`${services.location}->>'lng'`,
-            (JSON.parse(location as string).lng - JSON.parse(location as string).radius).toString(),
-            (JSON.parse(location as string).lng + JSON.parse(location as string).radius).toString()
-          )
-        ) : undefined,
-        priceRange ? and(
-          sql`CAST(${services.price} AS DECIMAL) >= ${JSON.parse(priceRange as string).min}`,
-          sql`CAST(${services.price} AS DECIMAL) <= ${JSON.parse(priceRange as string).max}`
-        ) : undefined
-      ),
+    const allServices = await db.query.services.findMany({
       with: {
-        provider: true
+        owner: true
       }
     });
-
-    const allServices = await query;
     res.json(allServices);
   } catch (error) {
     res.status(500).json({ message: "Error fetching services", error });
@@ -49,7 +25,7 @@ router.get("/:id", async (req, res) => {
     const service = await db.query.services.findFirst({
       where: eq(services.id, parseInt(req.params.id)),
       with: {
-        provider: true
+        owner: true
       }
     });
 
@@ -82,7 +58,7 @@ router.post("/", async (req, res) => {
       .insert(services)
       .values({
         ...result.data,
-        providerId: req.user.id,
+        ownerId: req.user.id,
       })
       .returning();
 
@@ -107,7 +83,7 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    if (service.providerId !== req.user.id) {
+    if (service.ownerId !== req.user.id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -149,7 +125,7 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    if (service.providerId !== req.user.id) {
+    if (service.ownerId !== req.user.id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -181,7 +157,7 @@ router.post("/recommendations", async (req, res) => {
     const availableYachts = await db.query.services.findMany({
       where: eq(services.type, "yacht"),
       with: {
-        provider: true
+        owner: true
       }
     });
 
