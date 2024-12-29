@@ -15,14 +15,12 @@ export function MobileLayout({ children }: MobileLayoutProps) {
       {/* Top Navigation with Logo and Search */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center gap-2">
-          <Link href="/">
-            <a className="flex-shrink-0">
-              <img
-                src="/etoile-yachts-logo.png"
-                alt="Etoile Yachts"
-                className="h-8 w-auto"
-              />
-            </a>
+          <Link href="/" className="flex-shrink-0">
+            <img
+              src="/etoile-yachts-logo.png"
+              alt="Etoile Yachts"
+              className="h-8 w-auto"
+            />
           </Link>
           <SearchBar
             onSearch={(query) => {
@@ -61,30 +59,23 @@ export function MobileLayout({ children }: MobileLayoutProps) {
       <nav className="sticky bottom-0 z-50 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container">
           <div className="flex h-16 items-center justify-around">
-            <Link href="/">
-              <a className={`flex flex-col items-center ${location === "/" ? "text-primary" : "text-muted-foreground"}`}>
-                <Home className="h-5 w-5" />
-                <span className="text-xs mt-1">Home</span>
-              </a>
-            </Link>
-            <Link href="/search">
-              <a className={`flex flex-col items-center ${location === "/search" ? "text-primary" : "text-muted-foreground"}`}>
-                <Search className="h-5 w-5" />
-                <span className="text-xs mt-1">Search</span>
-              </a>
-            </Link>
-            <Link href="/bookings">
-              <a className={`flex flex-col items-center ${location === "/bookings" ? "text-primary" : "text-muted-foreground"}`}>
-                <Calendar className="h-5 w-5" />
-                <span className="text-xs mt-1">Bookings</span>
-              </a>
-            </Link>
-            <Link href="/profile">
-              <a className={`flex flex-col items-center ${location === "/profile" ? "text-primary" : "text-muted-foreground"}`}>
-                <User className="h-5 w-5" />
-                <span className="text-xs mt-1">Profile</span>
-              </a>
-            </Link>
+            {[
+              { href: "/", icon: Home, label: "Home" },
+              { href: "/search", icon: Search, label: "Search" },
+              { href: "/bookings", icon: Calendar, label: "Bookings" },
+              { href: "/profile", icon: User, label: "Profile" }
+            ].map(({ href, icon: Icon, label }) => (
+              <Link 
+                key={href} 
+                href={href}
+                className={`flex flex-col items-center ${
+                  location === href ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs mt-1">{label}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </nav>
