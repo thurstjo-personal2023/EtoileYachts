@@ -12,9 +12,18 @@ export function MobileLayout({ children }: MobileLayoutProps) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Top Navigation with Search */}
+      {/* Top Navigation with Logo and Search */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
+        <div className="container flex h-14 items-center gap-2">
+          <Link href="/">
+            <a className="flex-shrink-0">
+              <img
+                src="/etoile-yachts-logo.png"
+                alt="Etoile Yachts"
+                className="h-8 w-auto"
+              />
+            </a>
+          </Link>
           <SearchBar
             onSearch={(query) => {
               // TODO: Implement search handler
@@ -35,7 +44,7 @@ export function MobileLayout({ children }: MobileLayoutProps) {
             className="w-full max-w-sm"
           />
           <button
-            className="ml-2 rounded-md p-2 hover:bg-accent"
+            className="ml-auto rounded-md p-2 hover:bg-accent"
             aria-label="Menu"
           >
             <Menu className="h-5 w-5" />
