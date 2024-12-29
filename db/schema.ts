@@ -16,8 +16,6 @@ export const users = pgTable("users", {
   verificationStatus: text("verification_status", {
     enum: ["unverified", "pending", "verified", "rejected"]
   }).default("unverified"),
-
-  // Profile fields
   profileImage: text("profile_image"),
   phoneNumber: text("phone_number"),
   bio: text("bio"),
@@ -25,8 +23,6 @@ export const users = pgTable("users", {
   nationality: text("nationality"),
   gender: text("gender"),
   occupation: text("occupation"),
-
-  // Complex JSON fields
   location: jsonb("location").$type<{
     country: string;
     city: string;
@@ -36,7 +32,6 @@ export const users = pgTable("users", {
       longitude: number;
     };
   }>(),
-
   notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
@@ -45,15 +40,12 @@ export const users = pgTable("users", {
     bookingReminders: boolean;
     paymentAlerts: boolean;
   }>(),
-
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered";
     contactInfoVisibility: "public" | "private" | "registered";
     experienceVisibility: "public" | "private" | "registered";
     businessInfoVisibility: "public" | "private" | "registered";
   }>(),
-
-  // Consumer-specific fields
   travelPreferences: jsonb("travel_preferences").$type<{
     preferredDestinations: string[];
     travelFrequency?: string;
@@ -65,7 +57,6 @@ export const users = pgTable("users", {
     };
     specialRequirements: string[];
   }>(),
-
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -151,12 +142,26 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Add Notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type", {
+    enum: ["booking_update", "promotion", "reminder", "system"]
+  }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   ownedVessels: many(vessels),
   providedActivities: many(activities),
   bookings: many(bookings),
   reviews: many(reviews),
+  notifications: many(notifications),
 }));
 
 export const vesselsRelations = relations(vessels, ({ one, many }) => ({
@@ -202,6 +207,14 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+
 // Schema exports
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -227,6 +240,11 @@ export const insertReviewSchema = createInsertSchema(reviews);
 export const selectReviewSchema = createSelectSchema(reviews);
 export type InsertReview = typeof reviews.$inferInsert;
 export type SelectReview = typeof reviews.$inferSelect;
+
+export const insertNotificationSchema = createInsertSchema(notifications);
+export const selectNotificationSchema = createSelectSchema(notifications);
+export type InsertNotification = typeof notifications.$inferInsert;
+export type SelectNotification = typeof notifications.$inferSelect;
 
 // Services alias (for consistency with frontend naming)
 export const services = vessels;
