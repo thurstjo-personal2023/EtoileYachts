@@ -21,23 +21,36 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
 
   // Initialize Google Maps script
   useEffect(() => {
-    console.log("[LocationPicker] Initializing...");
-    setIsInitializing(true);
+    let mounted = true;
 
     const initializeGoogleMaps = async () => {
       try {
+        console.log("[LocationPicker] Starting Maps initialization");
         await loadGoogleMapsScript();
-        console.log("[LocationPicker] Script loaded successfully");
-        setIsScriptLoaded(true);
+
+        if (mounted) {
+          console.log("[LocationPicker] Maps initialization successful");
+          setIsScriptLoaded(true);
+          setError(null);
+        }
       } catch (err) {
-        console.error('[LocationPicker] Failed to load Google Maps:', err);
-        setError('Failed to load location services. Please try again later.');
+        console.error('[LocationPicker] Maps initialization failed:', err);
+        if (mounted) {
+          setError('Unable to initialize location services. Click Retry to try again.');
+          setIsScriptLoaded(false);
+        }
       } finally {
-        setIsInitializing(false);
+        if (mounted) {
+          setIsInitializing(false);
+        }
       }
     };
 
     initializeGoogleMaps();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const {
@@ -50,45 +63,64 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     initOnMount: isScriptLoaded,
     debounce: 300,
     requestOptions: {
-      types: ['(cities)', 'establishment', 'geocode'],
       componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] }
     },
   });
 
-  // Monitor Places API status
+  // Debug logging
   useEffect(() => {
-    console.log("[LocationPicker] Ready:", ready, "Status:", status, "Results:", data.length);
-  }, [ready, status, data.length]);
+    console.log("[LocationPicker] State Update:", {
+      isScriptLoaded,
+      ready,
+      status,
+      resultsCount: data.length
+    });
+  }, [isScriptLoaded, ready, status, data]);
 
   const handleSelect = async (address: string) => {
-    console.log("[LocationPicker] Selected address:", address);
-    setValue(address, false);
-    clearSuggestions();
-
     try {
+      setValue(address, false);
+      clearSuggestions();
+
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      console.log("[LocationPicker] Geocoded coordinates:", { lat, lng });
+      console.log("[LocationPicker] Location selected:", { address, lat, lng });
       onLocationSelect({ address, lat, lng });
     } catch (error) {
-      console.error("[LocationPicker] Error selecting location:", error);
-      setError("Failed to get location details. Please try a different location.");
+      console.error("[LocationPicker] Selection error:", error);
+      setError("Unable to process this location. Please try another one.");
     }
+  };
+
+  const handleRetry = () => {
+    console.log("[LocationPicker] Retrying initialization");
+    setIsInitializing(true);
+    setError(null);
+    setIsScriptLoaded(false);
+    window.location.reload(); // Force a full reload to reinitialize
   };
 
   if (isInitializing) {
     return (
       <div className="flex items-center justify-center h-11 bg-muted/50 rounded-md">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading location services...</span>
+        <span className="ml-2 text-sm text-muted-foreground">
+          Initializing location services...
+        </span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-sm text-destructive p-2 rounded-md bg-destructive/10">
+      <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
         {error}
+        <button 
+          onClick={handleRetry}
+          className="block mt-2 text-xs underline hover:no-underline"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -101,7 +133,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
           <CommandInput
             value={value}
             onValueChange={(newValue) => {
-              console.log("[LocationPicker] Input value changed:", newValue);
+              console.log("[LocationPicker] Input changed:", newValue);
               setValue(newValue);
             }}
             placeholder={placeholder}
