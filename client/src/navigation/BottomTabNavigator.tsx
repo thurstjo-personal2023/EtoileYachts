@@ -5,18 +5,19 @@ import { Route, Switch } from "wouter";
 
 // Import pages
 import HomePage from '@/pages/HomePage';
-import DashboardPage from '@/pages/DashboardPage';
+import ExplorePage from '@/pages/ExplorePage';
 import BookingsPage from '@/pages/BookingsPage';
 import ProfilePage from '@/pages/ProfilePage';
-import YachtManagement from '@/pages/YachtManagement';
+import SupportPage from '@/pages/SupportPage';
+import NotificationsPage from '@/pages/NotificationsPage';
 
 const tabs = [
   { name: 'Home', path: '/', icon: Home, component: HomePage },
-  { name: 'Explore', path: '/explore', icon: Compass, component: DashboardPage },
+  { name: 'Explore', path: '/explore', icon: Compass, component: ExplorePage },
   { name: 'Bookings', path: '/bookings', icon: Calendar, component: BookingsPage },
   { name: 'Profile', path: '/profile', icon: User, component: ProfilePage },
-  { name: 'Support', path: '/support', icon: LifeBuoy, component: HomePage },
-  { name: 'Notifications', path: '/notifications', icon: Bell, component: HomePage },
+  { name: 'Support', path: '/support', icon: LifeBuoy, component: SupportPage },
+  { name: 'Notifications', path: '/notifications', icon: Bell, component: NotificationsPage },
 ];
 
 export function BottomTabNavigator() {
@@ -30,7 +31,6 @@ export function BottomTabNavigator() {
           {tabs.map(({ path, component: Component }) => (
             <Route key={path} path={path} component={Component} />
           ))}
-          <Route path="/yacht-management" component={YachtManagement} />
         </Switch>
       </main>
 
@@ -40,12 +40,12 @@ export function BottomTabNavigator() {
           const isActive = location === path;
           return (
             <Link key={path} href={path}>
-              <a className={`flex flex-col items-center justify-center p-2 ${
+              <div className={`flex flex-col items-center justify-center p-2 ${
                 isActive ? 'text-primary' : 'text-muted-foreground'
               }`}>
                 <Icon className="h-5 w-5" />
                 <span className="text-xs mt-1">{name}</span>
-              </a>
+              </div>
             </Link>
           );
         })}
