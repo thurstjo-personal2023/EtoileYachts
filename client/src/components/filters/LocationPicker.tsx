@@ -21,9 +21,11 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
+    callbackName: "initMap",
     requestOptions: {
       /* Restrict to yacht-friendly locations */
       types: ['(cities)', 'establishment', 'geocode'],
+      componentRestrictions: { country: ['us', 'fr', 'es', 'it', 'gr'] } // Major yacht destinations
     },
     debounce: 300,
   });
@@ -41,6 +43,24 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     }
   };
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Verify Google Maps API is properly loaded
+    if (!(window as any).google?.maps) {
+      setErrorMessage("Google Maps not loaded. Please check your API key configuration.");
+      console.error("Google Maps API not loaded");
+    }
+  }, []);
+
+  if (errorMessage) {
+    return (
+      <div className="text-sm text-destructive p-2 rounded-md bg-destructive/10">
+        {errorMessage}
+      </div>
+    );
+  }
+
   return (
     <div className={cn("relative w-full", className)}>
       <Command className="rounded-lg border shadow-none">
@@ -57,7 +77,9 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
         {value && (
           <CommandList>
             <CommandEmpty className="py-6 text-center text-sm">
-              No location found.
+              {status === "ZERO_RESULTS" ? "No locations found." : 
+               !ready ? "Loading..." : 
+               "Type to search locations"}
             </CommandEmpty>
             {status === "OK" &&
               data.map(({ place_id, description }) => (

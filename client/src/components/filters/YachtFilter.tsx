@@ -101,10 +101,15 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
     }
   });
 
-  const { isLoaded } = useLoadScript({
+  const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
     libraries: ["places"],
+    region: "EU",
   });
+
+  if (loadError) {
+    console.error("Error loading Google Maps:", loadError);
+  }
 
   const [selectedLocation, setSelectedLocation] = useState<{
     address: string;
@@ -309,7 +314,15 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        {isLoaded ? (
+                        {loadError ? (
+                          <div className="text-sm text-destructive p-2 rounded-md bg-destructive/10">
+                            Failed to load location picker. Please try again later.
+                          </div>
+                        ) : !isLoaded ? (
+                          <div className="flex items-center justify-center h-11 bg-muted rounded-md">
+                            <span className="text-sm text-muted-foreground">Loading map...</span>
+                          </div>
+                        ) : (
                           <LocationPicker
                             onLocationSelect={(location) => {
                               setSelectedLocation(location);
@@ -317,10 +330,6 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                             }}
                             placeholder="Search for a location..."
                           />
-                        ) : (
-                          <div className="flex items-center justify-center h-11 bg-muted rounded-md">
-                            <span className="text-sm text-muted-foreground">Loading map...</span>
-                          </div>
                         )}
                       </FormControl>
                     </FormItem>
