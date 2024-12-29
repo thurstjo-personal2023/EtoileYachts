@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, jsonb, integer, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -20,25 +20,89 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Vessels/Yachts table
+// Enhanced Vessels/Yachts table
 export const vessels = pgTable("vessels", {
   id: serial("id").primaryKey(),
   ownerId: integer("owner_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
   model: text("model").notNull(),
+  manufacturer: text("manufacturer").notNull(),
   year: integer("year").notNull(),
-  capacity: integer("capacity").notNull(),
+  registrationNumber: text("registration_number"),
+  flagState: text("flag_state"),
+
+  // Technical Specifications
+  length: decimal("length").notNull(), // Length Overall (LOA) in meters
+  beam: decimal("beam").notNull(), // Width at widest point in meters
+  draft: decimal("draft").notNull(), // Draft in meters
+  grossTonnage: integer("gross_tonnage"), // Gross tonnage
+  cruisingSpeed: integer("cruising_speed"), // Speed in knots
+  maxSpeed: integer("max_speed"), // Maximum speed in knots
+  fuelCapacity: integer("fuel_capacity"), // Fuel capacity in liters
+  waterCapacity: integer("water_capacity"), // Fresh water capacity in liters
+
+  // Engine and Performance
+  engineDetails: jsonb("engine_details").$type<{
+    manufacturer: string;
+    model: string;
+    power: number; // Power in HP
+    hours: number;
+    yearInstalled: number;
+    lastServiced: string;
+  }>(),
+
+  // Accommodation
+  capacity: integer("capacity").notNull(), // Maximum number of guests
+  cabins: integer("cabins").notNull(), // Number of cabins
+  berths: integer("berths").notNull(), // Number of berths
+  crew: integer("crew"), // Number of crew members
+
+  // Features and Amenities
   features: jsonb("features").$type<{
     hasSpa: boolean;
     hasDiningArea: boolean;
     hasChildFriendlyAmenities: boolean;
+    waterToys: string[];
+    entertainment: string[];
+    navigation: string[];
+    safety: string[];
     additionalFeatures: string[];
   }>().notNull().default({
     hasSpa: false,
     hasDiningArea: false,
     hasChildFriendlyAmenities: false,
+    waterToys: [],
+    entertainment: [],
+    navigation: [],
+    safety: [],
     additionalFeatures: []
   }),
+
+  // Layout and Interior
+  layout: jsonb("layout").$type<{
+    deckPlans: {
+      deck: string;
+      description: string;
+      areas: Array<{
+        name: string;
+        type: string;
+        features: string[];
+      }>;
+    }[];
+    interiorDesigner?: string;
+    lastRefitted?: string;
+  }>(),
+
+  // Safety and Certificates
+  certificates: jsonb("certificates").$type<Array<{
+    type: string;
+    number: string;
+    issueDate: string;
+    expiryDate: string;
+    issuingAuthority: string;
+  }>>().default([]),
+
+  // Availability and Booking
   availability: jsonb("availability").$type<Array<{
     date: Date;
     slots: Array<{
@@ -47,9 +111,32 @@ export const vessels = pgTable("vessels", {
       maxCapacity: number;
     }>;
   }>>().default([]),
+
+  // Location and Area of Operation
+  homePort: text("home_port"),
+  cruisingAreas: jsonb("cruising_areas").$type<string[]>().default([]),
+  currentLocation: jsonb("current_location").$type<{
+    lat: number;
+    lng: number;
+    lastUpdated: string;
+  }>(),
+
+  // Status and Maintenance
   status: text("status", {
     enum: ["available", "maintenance", "booked", "inactive"]
   }).notNull().default("available"),
+  lastMaintenanceDate: timestamp("last_maintenance_date"),
+  nextMaintenanceDate: timestamp("next_maintenance_date"),
+
+  // Pricing and Charter
+  charterType: text("charter_type", {
+    enum: ["crewed", "bareboat", "cabin"]
+  }).notNull(),
+  baseDayRate: decimal("base_day_rate").notNull(),
+  baseWeekRate: decimal("base_week_rate").notNull(),
+  currency: text("currency").notNull().default("USD"),
+
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
