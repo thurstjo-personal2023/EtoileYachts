@@ -232,3 +232,5 @@ export type SelectReview = typeof reviews.$inferSelect;
 export const services = vessels;
 export type InsertService = InsertVessel;
 export type SelectService = SelectVessel;
+export const insertServiceSchema = insertVesselSchema;
+export const selectServiceSchema = selectVesselSchema;
