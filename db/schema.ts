@@ -151,12 +151,28 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Add notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type", {
+    enum: ["booking", "message", "system", "promotion", "reminder"]
+  }).notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  read: boolean("read").default(false),
+  data: jsonb("data").$type<Record<string, any>>(),
+  deviceToken: text("device_token"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   ownedVessels: many(vessels),
   providedActivities: many(activities),
   bookings: many(bookings),
   reviews: many(reviews),
+  notifications: many(notifications),
 }));
 
 export const vesselsRelations = relations(vessels, ({ one, many }) => ({
@@ -202,6 +218,14 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   }),
 }));
 
+// Add notifications relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schema exports
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -227,6 +251,12 @@ export const insertReviewSchema = createInsertSchema(reviews);
 export const selectReviewSchema = createSelectSchema(reviews);
 export type InsertReview = typeof reviews.$inferInsert;
 export type SelectReview = typeof reviews.$inferSelect;
+
+// Add notification schemas
+export const insertNotificationSchema = createInsertSchema(notifications);
+export const selectNotificationSchema = createSelectSchema(notifications);
+export type InsertNotification = typeof notifications.$inferInsert;
+export type SelectNotification = typeof notifications.$inferSelect;
 
 // Services alias (for consistency with frontend naming)
 export const services = vessels;
