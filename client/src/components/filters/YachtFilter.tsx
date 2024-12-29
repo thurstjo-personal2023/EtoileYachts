@@ -27,6 +27,8 @@ import { Slider } from "@/components/ui/slider";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useQuery } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LocationPicker } from "./LocationPicker";
+import { useLoadScript } from "@react-google-maps/api";
 
 // Enhanced filter schema with search
 const filterSchema = z.object({
@@ -98,6 +100,18 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
       return response.json();
     }
   });
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+    libraries: ["places"],
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState<{
+    address: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
+
 
   const form = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -279,6 +293,35 @@ export function YachtFilter({ onFilter, className, initialValues }: YachtFilterP
                             ))}
                           </SelectContent>
                         </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="location">
+              <AccordionTrigger>Location</AccordionTrigger>
+              <AccordionContent>
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        {isLoaded ? (
+                          <LocationPicker
+                            onLocationSelect={(location) => {
+                              setSelectedLocation(location);
+                              field.onChange(location.address);
+                            }}
+                            placeholder="Search for a location..."
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-11 bg-muted rounded-md">
+                            <span className="text-sm text-muted-foreground">Loading map...</span>
+                          </div>
+                        )}
                       </FormControl>
                     </FormItem>
                   )}
