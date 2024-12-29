@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, jsonb, decimal, integer, boolean, dat
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
-// Table Declarations
+// User table with enhanced fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
@@ -13,8 +13,6 @@ export const users = pgTable("users", {
   role: text("role", {
     enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor"]
   }),
-
-  // Basic Information
   phoneNumber: text("phone_number"),
   profileImage: text("profile_image"),
   preferredLanguage: text("preferred_language").default("en"),
@@ -24,8 +22,6 @@ export const users = pgTable("users", {
   dateOfBirth: date("date_of_birth"),
   nationality: text("nationality"),
   identificationNumber: text("identification_number"),
-
-  // Location and Contact
   location: jsonb("location").$type<{
     country: string;
     city: string;
@@ -35,8 +31,6 @@ export const users = pgTable("users", {
       longitude: number;
     };
   }>(),
-
-  // Professional Information (for producers)
   professionalInfo: jsonb("professional_info").$type<{
     yearsOfExperience: number;
     languages: string[];
@@ -50,14 +44,6 @@ export const users = pgTable("users", {
       verificationStatus: "pending" | "verified" | "expired";
       documents?: string[];
     }>;
-    specializations: string[];
-    qualifications: Array<{
-      title: string;
-      institution: string;
-      dateObtained: string;
-      description?: string;
-      documents?: string[];
-    }>;
     availability: {
       timezone: string;
       workingHours: Array<{
@@ -67,30 +53,16 @@ export const users = pgTable("users", {
       }>;
       vacationDates: string[];
     };
-    portfolio?: {
-      description: string;
-      achievements: string[];
-      featuredServices: number[];
-    };
-    safetyRecord?: {
-      incidentCount: number;
-      lastIncidentDate?: string;
-      safetyRating: number;
-    };
   }>().default({
     yearsOfExperience: 0,
     languages: ["English"],
     certifications: [],
-    specializations: [],
-    qualifications: [],
     availability: {
       timezone: "UTC",
       workingHours: [],
       vacationDates: []
     }
   }),
-
-  // Settings and Preferences
   notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
@@ -110,7 +82,6 @@ export const users = pgTable("users", {
     maintenanceAlerts: true,
     complianceReminders: true
   }),
-
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered";
     contactInfoVisibility: "public" | "private" | "registered";
@@ -124,204 +95,134 @@ export const users = pgTable("users", {
     businessInfoVisibility: "registered",
     reviewsVisibility: "public"
   }),
-
   verificationStatus: text("verification_status", {
     enum: ["unverified", "pending", "verified", "rejected"]
   }).default("unverified"),
-
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Vessels owned/managed by producers
+// Vessels table for yacht management
 export const vessels = pgTable("vessels", {
   id: serial("id").primaryKey(),
   ownerId: integer("owner_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
-  type: text("type").notNull(),
-  manufacturer: text("manufacturer"),
-  model: text("model"),
-  year: integer("year"),
-  length: decimal("length", { precision: 5, scale: 2 }),
-  capacity: integer("capacity"),
-
-  // Enhanced features field
+  model: text("model").notNull(),
+  year: integer("year").notNull(),
+  length: decimal("length", { precision: 5, scale: 2 }).notNull(),
+  capacity: integer("capacity").notNull(),
   features: jsonb("features").$type<{
     hasSpa: boolean;
     hasDiningArea: boolean;
     hasChildFriendlyAmenities: boolean;
     additionalFeatures: string[];
-  }>().default({
+  }>().notNull().default({
     hasSpa: false,
     hasDiningArea: false,
     hasChildFriendlyAmenities: false,
     additionalFeatures: []
   }),
-
-  registration: jsonb("registration").$type<{
-    number: string;
-    country: string;
-    expiryDate: string;
-    documentUrl: string;
-  }>(),
   specifications: jsonb("specifications").$type<{
-    engine: {
-      type: string;
-      power: string;
-      hours?: number;
-    };
-    fuel: {
-      type: string;
-      capacity: number;
-    };
-    features: string[];
+    manufacturer: string;
+    engineType: string;
+    enginePower: string;
+    fuelCapacity: number;
+    waterCapacity: number;
+    navigation: string[];
     safetyEquipment: string[];
-  }>(),
-  maintenance: jsonb("maintenance").$type<Array<{
-    date: string;
-    type: string;
-    description: string;
-    provider: string;
-    cost: number;
-    nextDueDate: string;
-  }>>(),
-  insurance: jsonb("insurance").$type<{
-    provider: string;
-    policyNumber: string;
-    coverage: {
-      type: string;
-      amount: number;
-    }[];
-    expiryDate: string;
-  }>(),
+  }>().notNull(),
+  availability: jsonb("availability").$type<{
+    regularSchedule: Array<{
+      dayOfWeek: string;
+      timeSlots: Array<{
+        start: string;
+        end: string;
+        maxCapacity: number;
+      }>;
+    }>;
+    blackoutDates: string[];
+    specialEvents: Array<{
+      date: string;
+      name: string;
+      description: string;
+    }>;
+  }>().notNull().default({
+    regularSchedule: [],
+    blackoutDates: [],
+    specialEvents: []
+  }),
+  media: jsonb("media").$type<{
+    images: string[];
+    videos?: string[];
+    documents?: string[];
+  }>().default({
+    images: []
+  }),
   status: text("status", {
-    enum: ["active", "maintenance", "inactive"]
+    enum: ["available", "maintenance", "booked", "inactive"]
+  }).notNull().default("available"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Activities and services offered
+export const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  vesselId: integer("vessel_id").references(() => vessels.id).notNull(),
+  providerId: integer("provider_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  activityTypes: jsonb("activity_types").$type<Array<{
+    name: string;
+    isOffered: boolean;
+    description?: string;
+    minimumAge?: number;
+    difficulty: "beginner" | "intermediate" | "advanced";
+  }>>().notNull().default([]),
+  equipment: jsonb("equipment").$type<Array<{
+    name: string;
+    description: string;
+    quantity: number;
+    condition: "new" | "good" | "fair";
+    maintenanceSchedule?: {
+      lastMaintenance: string;
+      nextMaintenance: string;
+    };
+  }>>().notNull().default([]),
+  safetyMeasures: jsonb("safety_measures").$type<Array<{
+    title: string;
+    description: string;
+    priority: "high" | "medium" | "low";
+    requiredCertifications?: string[];
+    equipmentRequired?: string[];
+  }>>().notNull().default([]),
+  instructions: jsonb("instructions").$type<Array<{
+    step: number;
+    title: string;
+    description: string;
+    imageUrl?: string;
+    duration?: number;
+  }>>().notNull().default([]),
+  pricing: jsonb("pricing").$type<{
+    baseRate: number;
+    currency: string;
+    unit: "hour" | "day" | "week";
+    minimumDuration: number;
+    maximumDuration?: number;
+    securityDeposit?: number;
+  }>().notNull(),
+  status: text("status", {
+    enum: ["active", "inactive", "scheduled", "cancelled"]
   }).notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Service offerings by producers
-export const services = pgTable("services", {
-  id: serial("id").primaryKey(),
-  providerId: integer("provider_id").references(() => users.id).notNull(),
-  vesselId: integer("vessel_id").references(() => vessels.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  type: text("type").notNull(),
-
-  // Enhanced activity details
-  activityDetails: jsonb("activity_details").$type<{
-    types: Array<{
-      name: string;
-      isOffered: boolean;
-      description?: string;
-    }>;
-    equipment: Array<{
-      name: string;
-      description: string;
-      quantity: number;
-      condition: "new" | "good" | "fair";
-    }>;
-    safetyMeasures: Array<{
-      title: string;
-      description: string;
-      priority: "high" | "medium" | "low";
-      requiredCertifications?: string[];
-    }>;
-    instructions: Array<{
-      step: number;
-      title: string;
-      description: string;
-      imageUrl?: string;
-    }>;
-  }>().default({
-    types: [],
-    equipment: [],
-    safetyMeasures: [],
-    instructions: []
-  }),
-
-  pricing: jsonb("pricing").$type<{
-    baseRate: number;
-    currency: string;
-    unit: "hour" | "day" | "week" | "month";
-    minimumDuration: number;
-    maximumDuration?: number;
-    securityDeposit?: number;
-    additionalFees?: Array<{
-      name: string;
-      amount: number;
-      type: "fixed" | "percentage";
-      optional: boolean;
-    }>;
-    cancellationPolicy: {
-      type: "flexible" | "moderate" | "strict";
-      refundPercentage: number;
-      minimumNotice: number;
-    };
-  }>().notNull(),
-
-  availability: jsonb("availability").$type<{
-    regularHours: Array<{
-      day: string;
-      slots: Array<{
-        start: string;
-        end: string;
-        maxCapacity?: number;
-      }>;
-    }>;
-    blackoutDates: string[];
-    customAvailability: Array<{
-      date: string;
-      slots: Array<{
-        start: string;
-        end: string;
-        maxCapacity?: number;
-        isSpecialEvent?: boolean;
-        eventDescription?: string;
-      }>;
-    }>;
-    seasonalAdjustments?: Array<{
-      startDate: string;
-      endDate: string;
-      availability?: "high" | "low" | "closed";
-      priceMultiplier?: number;
-    }>;
-  }>().notNull(),
-
-  location: jsonb("location").$type<{
-    country: string;
-    city: string;
-    address: string;
-    coordinates: {
-      latitude: number;
-      longitude: number;
-    };
-    serviceArea?: {
-      radius: number;
-      unit: string;
-    };
-  }>().notNull(),
-  media: jsonb("media").$type<{
-    images: string[];
-    videos?: string[];
-    virtualTour?: string;
-    documents?: string[];
-  }>(),
-  status: text("status", {
-    enum: ["draft", "published", "suspended"]
-  }).notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Reviews and Ratings
+// Reviews and ratings
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
-  serviceId: integer("service_id").references(() => services.id).notNull(),
+  activityId: integer("activity_id").references(() => activities.id).notNull(),
   reviewerId: integer("reviewer_id").references(() => users.id).notNull(),
-  bookingId: integer("booking_id").references(() => bookings.id).notNull(),
   rating: integer("rating").notNull(),
   review: text("review"),
   detailedRatings: jsonb("detailed_ratings").$type<{
@@ -336,10 +237,6 @@ export const reviews = pgTable("reviews", {
     images?: string[];
     videos?: string[];
   }>(),
-  providerResponse: jsonb("provider_response").$type<{
-    response: string;
-    respondedAt: string;
-  }>(),
   status: text("status", {
     enum: ["pending", "published", "flagged", "removed"]
   }).notNull().default("pending"),
@@ -347,51 +244,14 @@ export const reviews = pgTable("reviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Certifications and Licenses
-export const certifications = pgTable("certifications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  type: text("type").notNull(),
-  name: text("name").notNull(),
-  issuingAuthority: text("issuing_authority").notNull(),
-  issuedDate: date("issued_date").notNull(),
-  expiryDate: date("expiry_date"),
-  licenseNumber: text("license_number"),
-  documentUrl: text("document_url"),
-  verificationStatus: text("verification_status", {
-    enum: ["pending", "verified", "rejected"]
-  }).notNull().default("pending"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Bookings and Reservations
+// Bookings and reservations
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  serviceId: integer("service_id").references(() => services.id).notNull(),
+  activityId: integer("activity_id").references(() => activities.id).notNull(),
   consumerId: integer("consumer_id").references(() => users.id).notNull(),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
-  pricing: jsonb("pricing").$type<{
-    baseRate: number;
-    additionalFees: Array<{
-      name: string;
-      amount: number;
-    }>;
-    discounts: Array<{
-      name: string;
-      amount: number;
-      type: "fixed" | "percentage";
-    }>;
-    securityDeposit: number;
-    total: number;
-    currency: string;
-  }>().notNull(),
-  guestInfo: jsonb("guest_info").$type<{
-    count: number;
-    names?: string[];
-    specialRequests?: string[];
-  }>(),
+  guestCount: integer("guest_count").notNull(),
   status: text("status", {
     enum: ["pending", "confirmed", "completed", "cancelled"]
   }).notNull().default("pending"),
@@ -402,34 +262,12 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  type: text("type", {
-    enum: ["license", "insurance", "registration", "tax", "other"]
-  }).notNull(),
-  filename: text("filename").notNull(),
-  mimeType: text("mime_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  storageKey: text("storage_key").notNull(),
-  status: text("status", {
-    enum: ["pending", "approved", "rejected"]
-  }).notNull().default("pending"),
-  adminNotes: text("admin_notes"),
-  expiryDate: timestamp("expiry_date"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-
-// Define Relations
+// Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   vessels: many(vessels),
-  services: many(services),
+  activities: many(activities),
   bookings: many(bookings),
-  certifications: many(certifications),
   reviewsGiven: many(reviews, { relationName: "userReviews" }),
-  documents: many(documents)
 }));
 
 export const vesselsRelations = relations(vessels, ({ one, many }) => ({
@@ -437,59 +275,40 @@ export const vesselsRelations = relations(vessels, ({ one, many }) => ({
     fields: [vessels.ownerId],
     references: [users.id],
   }),
-  services: many(services),
+  activities: many(activities),
 }));
 
-export const servicesRelations = relations(services, ({ one, many }) => ({
-  provider: one(users, {
-    fields: [services.providerId],
-    references: [users.id],
-  }),
+export const activitiesRelations = relations(activities, ({ one, many }) => ({
   vessel: one(vessels, {
-    fields: [services.vesselId],
+    fields: [activities.vesselId],
     references: [vessels.id],
+  }),
+  provider: one(users, {
+    fields: [activities.providerId],
+    references: [users.id],
   }),
   bookings: many(bookings),
   reviews: many(reviews),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
-  service: one(services, {
-    fields: [reviews.serviceId],
-    references: [services.id],
+  activity: one(activities, {
+    fields: [reviews.activityId],
+    references: [activities.id],
   }),
   reviewer: one(users, {
     fields: [reviews.reviewerId],
     references: [users.id],
   }),
-  booking: one(bookings, {
-    fields: [reviews.bookingId],
-    references: [bookings.id],
-  }),
 }));
 
-export const certificationsRelations = relations(certifications, ({ one }) => ({
-  user: one(users, {
-    fields: [certifications.userId],
-    references: [users.id],
-  }),
-}));
-
-export const bookingsRelations = relations(bookings, ({ one, many }) => ({
-  service: one(services, {
-    fields: [bookings.serviceId],
-    references: [services.id],
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  activity: one(activities, {
+    fields: [bookings.activityId],
+    references: [activities.id],
   }),
   consumer: one(users, {
     fields: [bookings.consumerId],
-    references: [users.id],
-  }),
-  reviews: many(reviews),
-}));
-
-export const documentsRelations = relations(documents, ({ one }) => ({
-  user: one(users, {
-    fields: [documents.userId],
     references: [users.id],
   }),
 }));
@@ -505,27 +324,17 @@ export const selectVesselSchema = createSelectSchema(vessels);
 export type InsertVessel = typeof vessels.$inferInsert;
 export type SelectVessel = typeof vessels.$inferSelect;
 
-export const insertServiceSchema = createInsertSchema(services);
-export const selectServiceSchema = createSelectSchema(services);
-export type InsertService = typeof services.$inferInsert;
-export type SelectService = typeof services.$inferSelect;
+export const insertActivitySchema = createInsertSchema(activities);
+export const selectActivitySchema = createSelectSchema(activities);
+export type InsertActivity = typeof activities.$inferInsert;
+export type SelectActivity = typeof activities.$inferSelect;
 
 export const insertReviewSchema = createInsertSchema(reviews);
 export const selectReviewSchema = createSelectSchema(reviews);
 export type InsertReview = typeof reviews.$inferInsert;
 export type SelectReview = typeof reviews.$inferSelect;
 
-export const insertCertificationSchema = createInsertSchema(certifications);
-export const selectCertificationSchema = createSelectSchema(certifications);
-export type InsertCertification = typeof certifications.$inferInsert;
-export type SelectCertification = typeof certifications.$inferSelect;
-
 export const insertBookingSchema = createInsertSchema(bookings);
 export const selectBookingSchema = createSelectSchema(bookings);
 export type InsertBooking = typeof bookings.$inferInsert;
 export type SelectBooking = typeof bookings.$inferSelect;
-
-export const insertDocumentSchema = createInsertSchema(documents);
-export const selectDocumentSchema = createSelectSchema(documents);
-export type InsertDocument = typeof documents.$inferInsert;
-export type SelectDocument = typeof documents.$inferSelect;
