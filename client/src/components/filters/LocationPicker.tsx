@@ -5,7 +5,7 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { MapPin } from "lucide-react";
+import { MapPin, Loader2 } from "lucide-react";
 import { loadGoogleMapsScript } from "@/lib/loadGoogleMapsScript";
 
 interface LocationPickerProps {
@@ -17,17 +17,27 @@ interface LocationPickerProps {
 export function LocationPicker({ onLocationSelect, className, placeholder = "Search location..." }: LocationPickerProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
+  // Initialize Google Maps script
   useEffect(() => {
-    loadGoogleMapsScript()
-      .then(() => {
-        console.log("Google Maps script loaded successfully");
+    console.log("[LocationPicker] Initializing...");
+    setIsInitializing(true);
+
+    const initializeGoogleMaps = async () => {
+      try {
+        await loadGoogleMapsScript();
+        console.log("[LocationPicker] Script loaded successfully");
         setIsScriptLoaded(true);
-      })
-      .catch((err) => {
-        console.error('Failed to load Google Maps:', err);
+      } catch (err) {
+        console.error('[LocationPicker] Failed to load Google Maps:', err);
         setError('Failed to load location services. Please try again later.');
-      });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeGoogleMaps();
   }, []);
 
   const {
@@ -45,26 +55,35 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
     },
   });
 
+  // Monitor Places API status
   useEffect(() => {
-    if (status) {
-      console.log("Places API Status:", status, "Data:", data);
-    }
-  }, [status, data]);
+    console.log("[LocationPicker] Ready:", ready, "Status:", status, "Results:", data.length);
+  }, [ready, status, data.length]);
 
   const handleSelect = async (address: string) => {
+    console.log("[LocationPicker] Selected address:", address);
     setValue(address, false);
     clearSuggestions();
 
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      console.log("Selected location:", { address, lat, lng });
+      console.log("[LocationPicker] Geocoded coordinates:", { lat, lng });
       onLocationSelect({ address, lat, lng });
     } catch (error) {
-      console.error("Error selecting location:", error);
+      console.error("[LocationPicker] Error selecting location:", error);
       setError("Failed to get location details. Please try a different location.");
     }
   };
+
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-11 bg-muted/50 rounded-md">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading location services...</span>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -82,7 +101,7 @@ export function LocationPicker({ onLocationSelect, className, placeholder = "Sea
           <CommandInput
             value={value}
             onValueChange={(newValue) => {
-              console.log("Input value changed:", newValue);
+              console.log("[LocationPicker] Input value changed:", newValue);
               setValue(newValue);
             }}
             placeholder={placeholder}
