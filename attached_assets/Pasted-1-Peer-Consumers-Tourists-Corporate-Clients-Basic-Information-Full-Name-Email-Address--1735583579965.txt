@@ -1,0 +1,125 @@
+1. Peer Consumers (Tourists, Corporate Clients)
+Basic Information
+•	Full Name
+•	Email Address
+•	Phone Number
+•	Profile Picture
+Demographics
+•	Date of Birth
+•	Gender (Optional)
+•	Nationality
+Account Preferences
+•	Preferred Language
+•	Preferred Currency
+Travel and Experience Preferences
+•	Activity Preferences (e.g., snorkeling, luxury dining, jet skiing)
+•	Dietary Restrictions (e.g., vegetarian, gluten-free)
+•	Accessibility Needs (if any)
+•	Favorite Destinations (e.g., specific marinas or regions)
+Loyalty Program
+•	Loyalty Tier (e.g., Bronze, Silver, Gold)
+•	Loyalty Points Balance
+•	Rewards History
+Past Interactions
+•	Booking History
+•	Reviews and Ratings Submitted
+Payment Information
+•	Saved Payment Methods
+•	Billing Address
+Emergency Contact
+•	Name
+•	Phone Number
+2. Peer Producers (Yacht Owners, Captains, Facilitators)
+Basic Information
+•	Full Name
+•	Business Name (if applicable)
+•	Email Address
+•	Phone Number
+•	Profile Picture
+Professional Information
+•	Role (e.g., Yacht Owner, Captain, Facilitator)
+•	Certifications (e.g., safety training, maritime licenses)
+•	Years of Experience
+•	Languages Spoken
+Assets/Offerings
+•	Yacht Details:
+o	Name of Yacht
+o	Model and Year
+o	Capacity (number of passengers)
+o	Features and Amenities:
+	Interior Features (e.g., cabins, bathrooms, kitchen)
+	Entertainment Options (e.g., audio systems, games)
+	Outdoor Features (e.g., deck size, sunbeds)
+	Water Toys and Equipment (e.g., jet skis, snorkeling gear)
+o	Technical Specifications:
+	Length and Beam
+	Engine Power
+	Cruising Speed
+	Range
+o	Safety and Compliance:
+	Safety Features (e.g., life jackets, first aid kits)
+	Certifications (e.g., maritime safety)
+o	Crew Details:
+	Roles and Expertise
+	Personalized Service Offerings
+•	Activity/Service Details:
+o	Types of Activities Offered (e.g., scuba diving, water skiing)
+o	Equipment Provided (if any)
+o	Safety Measures and Instructions
+Availability and Pricing
+•	Availability Schedule
+•	Pricing Options (e.g., hourly, daily rates, seasonal variations)
+•	Cancellation Policy
+Reviews and Ratings
+•	Average Customer Rating
+•	Customer Reviews
+Legal and Compliance
+•	Uploaded Documents (e.g., yacht registration, insurance policies, certifications)
+Visual Media
+•	Uploaded High-Resolution Photos:
+o	Exterior views (e.g., yacht, decks)
+o	Interior views (e.g., cabins, bathrooms)
+•	Uploaded Videos:
+o	Short tours showcasing yacht features
+o	Aerial drone footage
+3. Partners (Chefs, Water Sports Equipment Providers, Music Groups, Restaurants, Caterers)
+Basic Information
+•	Full Name
+•	Business Name
+•	Email Address
+•	Phone Number
+•	Profile Picture or Business Logo
+Professional Information
+•	Role (e.g., Chef, Equipment Provider, Caterer)
+•	Certifications (if applicable, e.g., culinary degrees, equipment safety certifications)
+•	Years of Experience
+•	Languages Spoken
+Service/Offering Details
+•	Type of Services Offered:
+o	Chefs: Menu Specialties, Dietary Accommodations
+o	Equipment Providers: Equipment Types and Features (e.g., SEABOBs, jet skis)
+o	Music Groups: Genre, Performance Types (e.g., live band, DJ)
+o	Restaurants/Caterers: Cuisine, Sample Menus, Event Packages
+•	Availability Schedule
+Pricing and Packages
+•	Pricing Options (e.g., per hour, per event)
+•	Bundled Offers (if applicable)
+•	Cancellation Policy
+Reviews and Ratings
+•	Average Customer Rating
+•	Customer Reviews
+Legal and Compliance
+•	Uploaded Documents (e.g., food safety certificates, equipment insurance)
+Visual Media
+•	Uploaded High-Resolution Photos:
+o	Service setups (e.g., catered dining, equipment in action)
+•	Uploaded Videos:
+o	Demonstrations or event highlights
+Common Features Across Profiles
+Communication Preferences
+•	Email, SMS, or App Notifications
+Privacy Settings
+•	Data sharing preferences for recommendations and analytics
+Emergency Contact Information
+•	Optional for Producers and Partners
+
