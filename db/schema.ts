@@ -9,12 +9,14 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email").unique().notNull(),
   fullName: text("full_name").notNull(),
-  userType: text("user_type", { enum: ["consumer", "producer", "partner"] }).notNull().default("consumer"),
+  userType: text("user_type", {
+    enum: ["consumer", "producer", "partner", "admin"]
+  }).notNull().default("consumer"),
   role: text("role", {
-    enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor"]
+    enum: ["yacht_owner", "captain", "facilitator", "crew_member", "instructor", "guest"]
   }),
   verificationStatus: text("verification_status", {
-    enum: ["unverified", "pending", "verified", "rejected"]
+    enum: ["unverified", "pending", "verified", "rejected", "suspended"]
   }).default("unverified"),
   profileImage: text("profile_image"),
   phoneNumber: text("phone_number"),
@@ -32,6 +34,58 @@ export const users = pgTable("users", {
       longitude: number;
     };
   }>(),
+  professionalInfo: jsonb("professional_info").$type<{
+    yearsOfExperience: number;
+    licenses: Array<{
+      type: string;
+      number: string;
+      issuingAuthority: string;
+      issueDate: string;
+      expiryDate: string;
+    }>;
+    certifications: Array<{
+      type: string;
+      name: string;
+      issuingAuthority: string;
+      issueDate: string;
+      expiryDate: string;
+      verificationStatus: "pending" | "verified" | "expired";
+    }>;
+    specializations: string[];
+    languages: Array<{
+      language: string;
+      proficiency: "basic" | "intermediate" | "fluent" | "native";
+    }>;
+    insuranceInfo: {
+      provider: string;
+      policyNumber: string;
+      coverage: string;
+      expiryDate: string;
+    };
+  }>(),
+  availability: jsonb("availability").$type<{
+    schedule: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+    }>;
+    preferences: {
+      minDuration: number;
+      maxDuration: number;
+      advanceBooking: number;
+      seasonalAvailability: {
+        summer: boolean;
+        winter: boolean;
+        spring: boolean;
+        fall: boolean;
+      };
+    };
+    customBlocks: Array<{
+      startDate: string;
+      endDate: string;
+      reason: string;
+    }>;
+  }>(),
   notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
@@ -39,23 +93,35 @@ export const users = pgTable("users", {
     marketingEmails: boolean;
     bookingReminders: boolean;
     paymentAlerts: boolean;
+    activityUpdates: boolean;
+    maintenanceAlerts: boolean;
+    weatherAlerts: boolean;
   }>(),
   privacySettings: jsonb("privacy_settings").$type<{
-    profileVisibility: "public" | "private" | "registered";
-    contactInfoVisibility: "public" | "private" | "registered";
-    experienceVisibility: "public" | "private" | "registered";
-    businessInfoVisibility: "public" | "private" | "registered";
+    profileVisibility: "public" | "private" | "registered" | "verified_only";
+    contactInfoVisibility: "public" | "private" | "registered" | "verified_only";
+    experienceVisibility: "public" | "private" | "registered" | "verified_only";
+    businessInfoVisibility: "public" | "private" | "registered" | "verified_only";
+    availabilityVisibility: "public" | "private" | "registered" | "verified_only";
   }>(),
-  travelPreferences: jsonb("travel_preferences").$type<{
+  servicePreferences: jsonb("service_preferences").$type<{
+    serviceTypes: string[];
     preferredDestinations: string[];
-    travelFrequency?: string;
-    typicalTripDuration?: string;
-    budgetRange?: {
+    specialRequirements: string[];
+    priceRange: {
       min: number;
       max: number;
       currency: string;
     };
-    specialRequirements: string[];
+    paymentMethods: string[];
+    cancellationPolicy: string;
+  }>(),
+  emergencyContact: jsonb("emergency_contact").$type<{
+    name: string;
+    relationship: string;
+    phone: string;
+    email: string;
+    address: string;
   }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
