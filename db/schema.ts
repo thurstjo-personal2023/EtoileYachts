@@ -79,6 +79,9 @@ export const vessels = pgTable("vessels", {
   maxSpeed: integer("max_speed"),
   fuelCapacity: integer("fuel_capacity"),
   waterCapacity: integer("water_capacity"),
+  construction: text("construction"),
+  designer: text("designer"),
+  classification: text("classification"),
   engineDetails: jsonb("engine_details").$type<{
     manufacturer: string;
     model: string;
@@ -86,6 +89,35 @@ export const vessels = pgTable("vessels", {
     hours: number;
     yearInstalled: number;
     lastServiced: string;
+  }>(),
+  amenities: jsonb("amenities").$type<{
+    entertainment: string[];
+    deck: string[];
+    waterToys: string[];
+    interior: string[];
+  }>(),
+  safetyEquipment: jsonb("safety_equipment").$type<string[]>(),
+  certifications: jsonb("certifications").$type<string[]>(),
+  lastSafetyInspection: timestamp("last_safety_inspection"),
+  currentLocation: jsonb("current_location").$type<{
+    port: string;
+    country: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  }>(),
+  pricing: jsonb("pricing").$type<{
+    baseDayRate: number;
+    baseWeekRate: number;
+    taxRate: number;
+    currency: string;
+    includedExtras: string[];
+    additionalFees: Array<{
+      name: string;
+      amount: number;
+      type: "fixed" | "percentage";
+    }>;
   }>(),
   status: text("status", {
     enum: ["available", "maintenance", "booked", "inactive"]

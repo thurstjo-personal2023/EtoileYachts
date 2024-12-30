@@ -19,6 +19,46 @@ export const yachtDetailsSchema = z.object({
   maxSpeed: z.number().optional(),
   fuelCapacity: z.number().optional(),
   waterCapacity: z.number().optional(),
+  construction: z.string().optional(),
+  designer: z.string().optional(),
+  classification: z.string().optional(),
+
+  // Amenities
+  amenities: z.object({
+    entertainment: z.array(z.string()),
+    deck: z.array(z.string()),
+    waterToys: z.array(z.string()),
+    interior: z.array(z.string())
+  }).optional(),
+
+  // Safety
+  safetyEquipment: z.array(z.string()),
+  certifications: z.array(z.string()),
+  lastSafetyInspection: z.string().optional(),
+
+  // Location
+  currentLocation: z.object({
+    port: z.string(),
+    country: z.string(),
+    coordinates: z.object({
+      latitude: z.number(),
+      longitude: z.number()
+    })
+  }),
+
+  // Pricing
+  pricing: z.object({
+    baseDayRate: z.number().positive(),
+    baseWeekRate: z.number().positive(),
+    taxRate: z.number().min(0).max(100),
+    currency: z.string().default("USD"),
+    includedExtras: z.array(z.string()),
+    additionalFees: z.array(z.object({
+      name: z.string(),
+      amount: z.number(),
+      type: z.enum(["fixed", "percentage"])
+    }))
+  }),
 
   // Engine Details
   engineDetails: z.object({
