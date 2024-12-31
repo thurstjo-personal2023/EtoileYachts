@@ -31,6 +31,7 @@ import {
   FileText,
   Clock,
   AlertCircle,
+  Anchor,
 } from "lucide-react";
 import { YachtDetailsForm } from "./YachtDetailsForm";
 import { ActivityDetailsForm } from "./ActivityDetailsForm";
@@ -42,8 +43,9 @@ type ProducerProfileFieldsProps = {
 export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
   return (
     <Tabs defaultValue="professional" className="w-full">
-      <TabsList className="grid grid-cols-3 lg:grid-cols-7">
+      <TabsList className="grid grid-cols-4 lg:grid-cols-8">
         <TabsTrigger value="professional">Professional</TabsTrigger>
+        <TabsTrigger value="yachts">Yachts</TabsTrigger>
         <TabsTrigger value="services">Services</TabsTrigger>
         <TabsTrigger value="certifications">Certifications</TabsTrigger>
         <TabsTrigger value="availability">Availability</TabsTrigger>
@@ -531,6 +533,10 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
       </TabsContent>
 
       <TabsContent value="yachts" className="space-y-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Anchor className="h-5 w-5 text-primary" />
+          <h3 className="font-medium">Yacht Details</h3>
+        </div>
         <YachtDetailsForm form={form} />
       </TabsContent>
 
