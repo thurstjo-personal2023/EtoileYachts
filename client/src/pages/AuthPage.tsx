@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -34,7 +34,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
@@ -49,10 +49,13 @@ export default function AuthPage() {
     },
   });
 
-  const handleSubmit = async (data: LoginFormData | RegisterFormData) => {
+  const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
-      const result = await (activeTab === "login" ? login(data) : registerUser(data));
-
+      const loginData = activeTab === "login" ? {
+        username: data.username,
+        password: data.password
+      } : data;
+      const result = await (activeTab === "login" ? login(loginData) : registerUser(data));
       if (!result.ok) {
         toast({
           title: "Error",
@@ -61,7 +64,6 @@ export default function AuthPage() {
         });
         return;
       }
-
       toast({
         title: "Success",
         description: `${activeTab === "login" ? "Logged in" : "Registered"} successfully!`,
@@ -93,15 +95,15 @@ export default function AuthPage() {
           <CardContent className="pt-6">
             {activeTab === "login" ? (
               <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleSubmit)} className="space-y-4">
+                <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={loginForm.control}
-                    name="email"
+                    name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Username</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter your email" {...field} />
+                          <Input type="text" placeholder="Enter your username" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -120,8 +122,8 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full"
                     disabled={loginForm.formState.isSubmitting}
                   >
@@ -134,7 +136,7 @@ export default function AuthPage() {
               </Form>
             ) : (
               <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(handleSubmit)} className="space-y-4">
+                <form onSubmit={registerForm.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={registerForm.control}
                     name="email"
@@ -174,8 +176,8 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full"
                     disabled={registerForm.formState.isSubmitting}
                   >
