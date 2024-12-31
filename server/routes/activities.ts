@@ -19,12 +19,20 @@ router.get("/", async (req, res) => {
   try {
     const allActivities = await db.query.activities.findMany({
       with: {
-        vessel: true,
-        provider: true
+        provider: {
+          columns: {
+            id: true,
+            fullName: true,
+            businessName: true,
+            profileImage: true,
+            producerProfile: true,
+          }
+        }
       }
     });
     res.json(allActivities);
   } catch (error) {
+    console.error("Error fetching activities:", error);
     res.status(500).json({ message: "Error fetching activities", error });
   }
 });
@@ -35,8 +43,15 @@ router.get("/:id", async (req, res) => {
     const activity = await db.query.activities.findFirst({
       where: eq(activities.id, parseInt(req.params.id)),
       with: {
-        vessel: true,
-        provider: true
+        provider: {
+          columns: {
+            id: true,
+            fullName: true,
+            businessName: true,
+            profileImage: true,
+            producerProfile: true,
+          }
+        }
       }
     });
 
@@ -46,18 +61,23 @@ router.get("/:id", async (req, res) => {
 
     res.json(activity);
   } catch (error) {
+    console.error("Error fetching activity:", error);
     res.status(500).json({ message: "Error fetching activity", error });
   }
 });
 
-// Create a new activity
+// Create a new activity (only for producers)
 router.post("/", requireAuth, async (req, res) => {
   try {
+    if (req.user?.userType !== "producer") {
+      return res.status(403).json({ message: "Only producers can create activities" });
+    }
+
     const result = insertActivitySchema.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
         message: "Invalid input",
-        errors: result.error.issues.map(i => i.message),
+        errors: result.error.issues.map((i) => i.message),
       });
     }
 
@@ -65,12 +85,13 @@ router.post("/", requireAuth, async (req, res) => {
       .insert(activities)
       .values({
         ...result.data,
-        providerId: req.user!.id,
+        providerId: req.user.id,
       })
       .returning();
 
     res.status(201).json(newActivity);
   } catch (error) {
+    console.error("Error creating activity:", error);
     res.status(500).json({ message: "Error creating activity", error });
   }
 });
@@ -94,7 +115,7 @@ router.put("/:id", requireAuth, async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         message: "Invalid input",
-        errors: result.error.issues.map(i => i.message),
+        errors: result.error.issues.map((i) => i.message),
       });
     }
 
@@ -109,6 +130,7 @@ router.put("/:id", requireAuth, async (req, res) => {
 
     res.json(updatedActivity);
   } catch (error) {
+    console.error("Error updating activity:", error);
     res.status(500).json({ message: "Error updating activity", error });
   }
 });
@@ -134,6 +156,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
 
     res.status(204).send();
   } catch (error) {
+    console.error("Error deleting activity:", error);
     res.status(500).json({ message: "Error deleting activity", error });
   }
 });

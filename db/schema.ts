@@ -301,6 +301,44 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Activities table for yacht-related activities
+export const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  providerId: integer("provider_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  type: text("type", {
+    enum: ["water_sports", "sailing", "fishing", "special_events", "diving"]
+  }).notNull(),
+  equipment: jsonb("equipment").$type<string[]>(),
+  safetyMeasures: jsonb("safety_measures").$type<string[]>(),
+  pricing: jsonb("pricing").$type<{
+    rate: number;
+    unit: "hour" | "day" | "event";
+    minimumDuration?: number;
+    maximumDuration?: number;
+    groupSize?: {
+      min: number;
+      max: number;
+    };
+  }>(),
+  status: text("status", {
+    enum: ["active", "inactive", "maintenance"]
+  }).default("active"),
+  location: jsonb("location").$type<{
+    latitude: number;
+    longitude: number;
+    name: string;
+    address?: string;
+  }>(),
+  media: jsonb("media").$type<{
+    images: string[];
+    videos?: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
@@ -308,11 +346,26 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews)
 }));
 
+// Add relations for activities
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  provider: one(users, {
+    fields: [activities.providerId],
+    references: [users.id],
+  }),
+}));
+
 // Create schemas for notifications
 export const insertNotificationSchema = createInsertSchema(notifications);
 export const selectNotificationSchema = createSelectSchema(notifications);
 export type InsertNotification = typeof notifications.$inferInsert;
 export type SelectNotification = typeof notifications.$inferSelect;
+
+// Create schemas for activities
+export const insertActivitySchema = createInsertSchema(activities);
+export const selectActivitySchema = createSelectSchema(activities);
+export type InsertActivity = typeof activities.$inferInsert;
+export type SelectActivity = typeof activities.$inferSelect;
+
 
 // Schema exports
 export const insertUserSchema = createInsertSchema(users);
