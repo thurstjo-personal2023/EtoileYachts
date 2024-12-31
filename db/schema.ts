@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   businessName: text("business_name"),
   phoneNumber: text("phone_number"),
   profileImage: text("profile_image"),
+  fcmToken: text("fcm_token"),
   userType: text("user_type", {
     enum: ["consumer", "producer", "partner", "admin"]
   }).notNull().default("consumer"),
@@ -115,8 +116,31 @@ export const users = pgTable("users", {
       weather: boolean;
       system: boolean;
       marketing: boolean;
+      service_update: boolean;
+      emergency: boolean;
     };
     frequency: "instant" | "daily" | "weekly";
+    quiet_hours: {
+      enabled: boolean;
+      start: string; // Format: "HH:mm"
+      end: string; // Format: "HH:mm"
+      timezone: string;
+    };
+    channels: {
+      email: {
+        enabled: boolean;
+        categories: string[];
+      };
+      sms: {
+        enabled: boolean;
+        categories: string[];
+      };
+      push: {
+        enabled: boolean;
+        categories: string[];
+        token?: string;
+      };
+    };
   }>(),
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered" | "verified";
@@ -152,9 +176,32 @@ export const insertUserSchema = z.object({
       maintenance: z.boolean(),
       weather: z.boolean(),
       system: z.boolean(),
-      marketing: z.boolean()
+      marketing: z.boolean(),
+      service_update: z.boolean(),
+      emergency: z.boolean()
     }),
-    frequency: z.enum(["instant", "daily", "weekly"])
+    frequency: z.enum(["instant", "daily", "weekly"]),
+    quiet_hours: z.object({
+      enabled: z.boolean(),
+      start: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
+      end: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Invalid time format (HH:mm)"),
+      timezone: z.string()
+    }).optional(),
+    channels: z.object({
+      email: z.object({
+        enabled: z.boolean(),
+        categories: z.array(z.string()).optional()
+      }),
+      sms: z.object({
+        enabled: z.boolean(),
+        categories: z.array(z.string()).optional()
+      }),
+      push: z.object({
+        enabled: z.boolean(),
+        categories: z.array(z.string()).optional(),
+        token: z.string().optional()
+      })
+    }).optional()
   }).optional(),
   privacySettings: z.object({
     profileVisibility: z.enum(["public", "private", "registered", "verified"]),
@@ -182,11 +229,13 @@ export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   type: text("type", {
-    enum: ["booking", "message", "system", "payment", "maintenance", "weather"]
+    enum: ["booking", "message", "system", "payment", "maintenance", "weather", "service_update", "promotion", "emergency"]
   }).notNull(),
   title: text("title").notNull(),
   message: text("message").notNull(),
-  category: text("category").notNull(),
+  category: text("category", {
+    enum: ["transaction", "communication", "service", "safety", "marketing"]
+  }).notNull(),
   priority: text("priority", {
     enum: ["low", "medium", "high", "urgent"]
   }).default("medium"),

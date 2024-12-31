@@ -20,7 +20,8 @@ export interface SendNotificationParams {
   userId: number;
   title: string;
   message: string;
-  type: 'booking' | 'message' | 'system' | 'payment' | 'maintenance' | 'weather';
+  type: 'booking' | 'message' | 'system' | 'payment' | 'maintenance' | 'weather' | 'service_update' | 'promotion' | 'emergency';
+  category: 'transaction' | 'communication' | 'service' | 'safety' | 'marketing';
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   metadata?: Record<string, any>;
   scheduledFor?: Date;
@@ -32,13 +33,14 @@ export async function sendNotification({
   title,
   message,
   type,
+  category,
   priority = 'medium',
   metadata = {},
   scheduledFor,
   expiresAt,
 }: SendNotificationParams) {
   try {
-    // Get user's FCM token
+    // Get user's FCM token and notification preferences
     const [user] = await db
       .select({
         fcmToken: users.fcmToken,
@@ -72,6 +74,7 @@ export async function sendNotification({
         title,
         message,
         type,
+        category,
         priority,
         metadata,
         scheduledFor,
@@ -80,7 +83,7 @@ export async function sendNotification({
       .returning();
 
     // Prepare FCM message
-    const fcmMessage = {
+    const fcmMessage: admin.messaging.Message = {
       notification: {
         title,
         body: message,
@@ -88,6 +91,7 @@ export async function sendNotification({
       data: {
         notificationId: notification.id.toString(),
         type,
+        category,
         ...metadata,
       },
       android: {
@@ -143,10 +147,10 @@ function checkQuietHours(
   const userTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
   const [startHour, startMinute] = start.split(':').map(Number);
   const [endHour, endMinute] = end.split(':').map(Number);
-  
+
   const hour = userTime.getHours();
   const minute = userTime.getMinutes();
-  
+
   if (startHour < endHour) {
     return (hour > startHour || (hour === startHour && minute >= startMinute)) &&
            (hour < endHour || (hour === endHour && minute <= endMinute));
