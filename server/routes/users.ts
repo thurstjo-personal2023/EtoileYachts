@@ -23,6 +23,11 @@ const updateProfileSchema = z.object({
   }).optional(),
 });
 
+// FCM token update schema
+const updateFcmTokenSchema = z.object({
+  token: z.string(),
+});
+
 // Get user profile
 router.get("/profile", async (req, res) => {
   if (!req.isAuthenticated()) {
@@ -45,6 +50,37 @@ router.get("/profile", async (req, res) => {
     res.json(profile);
   } catch (error) {
     res.status(500).json({ message: "Error fetching profile", error });
+  }
+});
+
+// Update FCM token
+router.post("/fcm-token", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  try {
+    const result = updateFcmTokenSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Invalid input",
+        errors: result.error.issues.map(i => i.message),
+      });
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        fcmToken: result.data.token,
+        fcmTokenLastUpdated: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, req.user.id))
+      .returning();
+
+    res.json({ message: "FCM token updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating FCM token", error });
   }
 });
 

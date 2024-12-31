@@ -15,6 +15,10 @@ export const users = pgTable("users", {
     enum: ["consumer", "producer", "partner", "admin"]
   }).notNull().default("consumer"),
 
+  // Firebase Cloud Messaging token
+  fcmToken: text("fcm_token"),
+  fcmTokenLastUpdated: timestamp("fcm_token_last_updated"),
+
   // Basic Information
   dateOfBirth: timestamp("date_of_birth"),
   gender: text("gender"),
@@ -238,7 +242,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Notifications table for Firebase Cloud Messaging integration
+// Notifications table enhanced for Firebase Cloud Messaging
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -253,16 +257,36 @@ export const notifications = pgTable("notifications", {
   }).default("medium"),
   read: boolean("read").default(false),
   actionUrl: text("action_url"),
+
+  // Enhanced metadata for FCM
+  fcmMessageId: text("fcm_message_id"),
+  fcmStatus: text("fcm_status", {
+    enum: ["pending", "sent", "delivered", "failed"]
+  }).default("pending"),
+  fcmError: text("fcm_error"),
+
   metadata: jsonb("metadata").$type<{
     bookingId?: number;
     messageId?: number;
     amount?: number;
     location?: string;
+    // FCM specific fields
+    imageUrl?: string;
+    icon?: string;
+    badge?: string;
+    color?: string;
+    sound?: string;
+    clickAction?: string;
+    tag?: string;
     [key: string]: any;
   }>(),
+
+  scheduledFor: timestamp("scheduled_for"),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at")
 });
 
 // Reviews table
@@ -293,7 +317,7 @@ export const bookings = pgTable("bookings", {
   }).default("pending"),
   guestCount: integer("guest_count"),
   specialRequests: text("special_requests"),
-  totalAmount: decimal("total_amount"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
   paymentStatus: text("payment_status", {
     enum: ["pending", "paid", "refunded", "failed"]
   }).default("pending"),

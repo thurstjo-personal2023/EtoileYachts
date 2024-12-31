@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 const analytics = getAnalytics(app);
 
-// Request notification permission
+// Request notification permission and get FCM token
 export async function requestNotificationPermission() {
   try {
     const permission = await Notification.requestPermission();
@@ -26,6 +26,17 @@ export async function requestNotificationPermission() {
       const token = await getToken(messaging, {
         vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
       });
+
+      // Store the token in the backend
+      await fetch('/api/users/fcm-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+        credentials: 'include',
+      });
+
       return token;
     }
     throw new Error('Notification permission denied');
