@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InsertUser, SelectUser } from "@db/schema";
 
 type RequestResult = {
@@ -11,7 +11,7 @@ type RequestResult = {
 async function handleRequest(
   url: string,
   method: string,
-  body?: any
+  body?: InsertUser
 ): Promise<RequestResult> {
   try {
     const response = await fetch(url, {
@@ -37,8 +37,8 @@ async function handleRequest(
 }
 
 async function fetchUser(): Promise<SelectUser | null> {
-  const response = await fetch('/api/user', {
-    credentials: 'include'
+  const response = await fetch("/api/user", {
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -60,30 +60,30 @@ export function useUser() {
   const queryClient = useQueryClient();
 
   const { data: user, error, isLoading } = useQuery<SelectUser | null, Error>({
-    queryKey: ['user'],
+    queryKey: ["user"],
     queryFn: fetchUser,
     staleTime: Infinity,
-    retry: false
+    retry: false,
   });
 
-  const loginMutation = useMutation<RequestResult, Error, { username: string; password: string; }>({
-    mutationFn: (userData) => handleRequest('/api/login', 'POST', userData),
+  const loginMutation = useMutation<RequestResult, Error, InsertUser>({
+    mutationFn: (userData) => handleRequest("/api/login", "POST", userData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
 
   const logoutMutation = useMutation<RequestResult, Error>({
-    mutationFn: () => handleRequest('/api/logout', 'POST'),
+    mutationFn: () => handleRequest("/api/logout", "POST"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
 
   const registerMutation = useMutation<RequestResult, Error, InsertUser>({
-    mutationFn: (userData) => handleRequest('/api/register', 'POST', userData),
+    mutationFn: (userData) => handleRequest("/api/register", "POST", userData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
 

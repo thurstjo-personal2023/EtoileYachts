@@ -6,9 +6,8 @@ import { z } from "zod";
 // Users table with enhanced profile fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").unique().notNull(),
-  password: text("password").notNull(),
   email: text("email").unique().notNull(),
+  password: text("password").notNull(),
   fullName: text("full_name").notNull(),
   businessName: text("business_name"),
   phoneNumber: text("phone_number"),
@@ -136,9 +135,8 @@ export const users = pgTable("users", {
 
 // Create schemas for users with proper validation
 export const insertUserSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
   email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   fullName: z.string().min(1, "Full name is required"),
   userType: z.enum(["consumer", "producer", "partner", "admin"]).default("consumer"),
   phoneNumber: z.string().nullable().optional(),
