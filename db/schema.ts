@@ -1,6 +1,7 @@
 import { pgTable, text, serial, timestamp, jsonb, integer, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+import { z } from "zod";
 
 // Users table with enhanced profile fields
 export const users = pgTable("users", {
@@ -14,162 +15,11 @@ export const users = pgTable("users", {
   userType: text("user_type", {
     enum: ["consumer", "producer", "partner", "admin"]
   }).notNull().default("consumer"),
-
-  // Firebase Cloud Messaging token for notifications
-  fcmToken: text("fcm_token"),
-  fcmTokenLastUpdated: timestamp("fcm_token_last_updated"),
-
-  // Basic Information
   dateOfBirth: timestamp("date_of_birth"),
   gender: text("gender"),
   nationality: text("nationality"),
   preferredLanguage: text("preferred_language"),
   preferredCurrency: text("preferred_currency"),
-  bio: text("bio"),
-
-  // Producer Profile
-  producerProfile: jsonb("producer_profile").$type<{
-    role: "yacht_owner" | "captain" | "crew" | "manager";
-    experience: {
-      yearsOfExperience: number;
-      qualifications: Array<{
-        type: string;
-        name: string;
-        issuingAuthority: string;
-        issueDate: string;
-        expiryDate: string;
-        documentUrl: string;
-        verificationStatus: "pending" | "verified" | "expired";
-      }>;
-      specialties: string[];
-      languages: Array<{
-        language: string;
-        proficiency: "basic" | "intermediate" | "fluent" | "native";
-      }>;
-    };
-    vessels: Array<{
-      name: string;
-      type: string;
-      manufacturer: string;
-      model: string;
-      year: number;
-      registration: {
-        number: string;
-        country: string;
-        port: string;
-      };
-      specifications: {
-        length: number;
-        beam: number;
-        draft: number;
-        grossTonnage: number;
-        engineHours: number;
-        fuelCapacity: number;
-        waterCapacity: number;
-        maxSpeed: number;
-        cruisingSpeed: number;
-        range: number;
-      };
-      capacity: {
-        guests: {
-          day: number;
-          overnight: number;
-        };
-        cabins: {
-          guest: number;
-          crew: number;
-        };
-        crew: {
-          minimum: number;
-          maximum: number;
-        };
-      };
-      features: {
-        navigation: string[];
-        safety: string[];
-        entertainment: string[];
-        waterSports: string[];
-        amenities: string[];
-      };
-      media: {
-        images: Array<{
-          url: string;
-          type: "exterior" | "interior" | "aerial" | "detail";
-          isFeatured: boolean;
-          caption: string;
-        }>;
-        videos: Array<{
-          url: string;
-          thumbnail: string;
-          title: string;
-          description: string;
-        }>;
-        virtualTours: Array<{
-          url: string;
-          title: string;
-          description: string;
-        }>;
-      };
-      documents: Array<{
-        type: string;
-        number: string;
-        issueDate: string;
-        expiryDate: string;
-        documentUrl: string;
-        verificationStatus: "pending" | "verified" | "expired";
-      }>;
-      maintenance: Array<{
-        type: string;
-        date: string;
-        description: string;
-        provider: string;
-        cost: number;
-        nextDueDate: string;
-        documents: Array<{
-          type: string;
-          url: string;
-          description: string;
-        }>;
-      }>;
-    }>;
-    certifications: Array<{
-      type: string;
-      name: string;
-      issuingAuthority: string;
-      issueDate: string;
-      expiryDate: string;
-      documentUrl: string;
-      verificationStatus: "pending" | "verified" | "expired";
-    }>;
-    availability: {
-      schedule: Array<{
-        day: string;
-        startTime: string;
-        endTime: string;
-      }>;
-      seasonalAvailability: {
-        summer: boolean;
-        winter: boolean;
-        spring: boolean;
-        fall: boolean;
-      };
-    };
-  }>(),
-
-  // Contact Information
-  address: jsonb("address").$type<{
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
-    };
-  }>(),
-
-  // Notification Settings
   notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
@@ -183,15 +33,7 @@ export const users = pgTable("users", {
       marketing: boolean;
     };
     frequency: "instant" | "daily" | "weekly";
-    quiet_hours: {
-      enabled: boolean;
-      start: string;
-      end: string;
-      timezone: string;
-    };
   }>(),
-
-  // Privacy Settings
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered" | "verified";
     contactVisibility: "public" | "private" | "registered" | "verified";
@@ -199,33 +41,45 @@ export const users = pgTable("users", {
     portfolioVisibility: "public" | "private" | "registered" | "verified";
     reviewsVisibility: "public" | "private" | "registered" | "verified";
   }>(),
-
-  // Emergency Contact
-  emergencyContact: jsonb("emergency_contact").$type<{
-    name: string;
-    relationship: string;
-    phoneNumber: string;
-    email: string;
-    address: {
-      street: string;
-      city: string;
-      state: string;
-      country: string;
-      postalCode: string;
-    };
-  }>(),
-
   verificationStatus: text("verification_status", {
     enum: ["unverified", "pending", "verified", "rejected", "suspended"]
   }).default("unverified"),
-
   lastActive: timestamp("last_active"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Create schemas for users
-export const insertUserSchema = createInsertSchema(users);
+// Create schemas for users with proper validation
+export const insertUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  fullName: z.string().min(1, "Full name is required"),
+  userType: z.enum(["consumer", "producer", "partner", "admin"]).default("consumer"),
+  phoneNumber: z.string().nullable().optional(),
+  preferredLanguage: z.string().nullable().optional(),
+  notificationPreferences: z.object({
+    email: z.boolean(),
+    sms: z.boolean(),
+    pushNotifications: z.boolean(),
+    categories: z.object({
+      booking: z.boolean(),
+      payment: z.boolean(),
+      maintenance: z.boolean(),
+      weather: z.boolean(),
+      system: z.boolean(),
+      marketing: z.boolean()
+    }),
+    frequency: z.enum(["instant", "daily", "weekly"])
+  }).optional(),
+  privacySettings: z.object({
+    profileVisibility: z.enum(["public", "private", "registered", "verified"]),
+    contactVisibility: z.enum(["public", "private", "registered", "verified"]),
+    servicesVisibility: z.enum(["public", "private", "registered", "verified"]),
+    portfolioVisibility: z.enum(["public", "private", "registered", "verified"]),
+    reviewsVisibility: z.enum(["public", "private", "registered", "verified"])
+  }).optional()
+});
+
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
@@ -253,20 +107,16 @@ export const notifications = pgTable("notifications", {
   }).default("medium"),
   read: boolean("read").default(false),
   actionUrl: text("action_url"),
-
-  // Enhanced metadata for FCM
   fcmMessageId: text("fcm_message_id"),
   fcmStatus: text("fcm_status", {
     enum: ["pending", "sent", "delivered", "failed"]
   }).default("pending"),
   fcmError: text("fcm_error"),
-
   metadata: jsonb("metadata").$type<{
     bookingId?: number;
     messageId?: number;
     amount?: number;
     location?: string;
-    // FCM specific fields
     imageUrl?: string;
     icon?: string;
     badge?: string;
@@ -276,7 +126,6 @@ export const notifications = pgTable("notifications", {
     tag?: string;
     [key: string]: any;
   }>(),
-
   scheduledFor: timestamp("scheduled_for"),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
