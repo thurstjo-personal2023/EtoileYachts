@@ -46,40 +46,27 @@ export const users = pgTable("users", {
       }>;
     };
     yachtDetails: Array<{
-      // Basic Information
       name: string;
       type: string;
       manufacturer: string;
       model: string;
       year: number | null;
-      // Specifications
-      specifications: {
-        length: string;
-        beam: string;
-        enginePower: string;
-        fuelType: string;
-      };
-      // Capacity
+      length: number | null;
       capacity: {
         guests: number | null;
         crew: number | null;
       };
-      // Features
-      features: {
-        amenities: string[]; // ["Spa", "Dining Area", "Sunbeds", etc.]
-      };
-      // Media
-      media: {
-        photos: Array<{
-          url: string;
-          type: "exterior" | "interior";
-          isFeatured: boolean;
-        }>;
-        videos: Array<{
-          url: string;
-          type: string;
-        }>;
-      };
+      features: string[];
+      images: Array<{
+        url: string;
+        type: "exterior" | "interior";
+        isFeatured: boolean;
+      }>;
+      documents: Array<{
+        type: string;
+        url: string;
+        expiryDate: string | null;
+      }>;
     }>;
     availability: {
       schedule: Array<{
