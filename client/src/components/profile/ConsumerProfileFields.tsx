@@ -9,7 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { CreditCard, MapPin, Gift, Clock, Phone, Shield, Wallet } from "lucide-react";
+import { CreditCard, MapPin, Gift, Clock, Phone, Shield, Wallet } from 'lucide-react';
+import { z } from "zod";
+
+// Define validation schema for privacy settings
+const privacySchema = z.object({
+  profileVisibility: z.enum(["public", "private", "registered", "verified"]).default("private"),
+  contactInfoVisibility: z.enum(["public", "private", "registered", "verified"]).default("private"),
+  galleryVisibility: z.enum(["public", "private", "registered", "verified"]).default("private"),
+  reviewsVisibility: z.enum(["public", "private", "registered", "verified"]).default("private"),
+});
 
 type ConsumerProfileFieldsProps = {
   form: ReturnType<typeof useForm<any>>;
@@ -384,7 +393,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                   <FormLabel>Profile Visibility</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value || 'private'}
+                    value={field.value || "private"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -411,7 +420,61 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                   <FormLabel>Contact Information Visibility</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value || 'private'}
+                    value={field.value || "private"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="registered">Registered Users Only</SelectItem>
+                      <SelectItem value="verified">Verified Users Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="privacySettings.galleryVisibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gallery Visibility</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || "private"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="registered">Registered Users Only</SelectItem>
+                      <SelectItem value="verified">Verified Users Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="privacySettings.reviewsVisibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reviews Visibility</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || "private"}
                   >
                     <FormControl>
                       <SelectTrigger>
