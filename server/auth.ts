@@ -67,7 +67,6 @@ export function setupAuth(app: Express) {
         try {
           console.log(`[Auth] Attempting login for email: ${email}`);
 
-          // Select user fields necessary for authentication
           const [user] = await db
             .select()
             .from(users)
@@ -127,14 +126,45 @@ export function setupAuth(app: Express) {
     try {
       console.log("[Auth] Registration attempt:", req.body);
 
-      const result = insertUserSchema.safeParse(req.body);
+      // Extract only the fields that exist in our schema
+      const userData = {
+        email: req.body.email,
+        password: req.body.password,
+        fullName: req.body.fullName,
+        userType: req.body.userType,
+        phoneNumber: req.body.phoneNumber || null,
+        preferredLanguage: req.body.preferredLanguage || null,
+        notificationPreferences: {
+          email: true,
+          sms: true,
+          pushNotifications: true,
+          categories: {
+            booking: true,
+            payment: true,
+            maintenance: true,
+            weather: true,
+            system: true,
+            marketing: true
+          },
+          frequency: "instant"
+        },
+        privacySettings: {
+          profileVisibility: "public",
+          contactVisibility: "registered",
+          servicesVisibility: "public",
+          portfolioVisibility: "public",
+          reviewsVisibility: "public"
+        }
+      };
+
+      const result = insertUserSchema.safeParse(userData);
       if (!result.success) {
         const errorMessage = result.error.issues.map(i => i.message).join(", ");
         console.log("[Auth] Registration validation failed:", errorMessage);
         return res.status(400).json({ message: "Invalid input: " + errorMessage });
       }
 
-      const { email, password, userType, fullName } = result.data;
+      const { email, password } = result.data;
 
       // Check if user already exists
       const [existingUser] = await db
@@ -151,14 +181,12 @@ export function setupAuth(app: Express) {
       // Hash the password
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user
+      // Create the new user with only valid fields
       const [newUser] = await db
         .insert(users)
         .values({
-          email,
+          ...userData,
           password: hashedPassword,
-          userType,
-          fullName,
         })
         .returning();
 
