@@ -58,44 +58,43 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        console.log(`[Auth] Attempting login for username: ${username}`);
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password'
+      },
+      async (email: string, password: string, done) => {
+        try {
+          console.log(`[Auth] Attempting login for email: ${email}`);
 
-        // Only select necessary fields for authentication
-        const [user] = await db
-          .select({
-            id: users.id,
-            username: users.username,
-            password: users.password,
-            email: users.email,
-            fullName: users.fullName,
-            userType: users.userType,
-          })
-          .from(users)
-          .where(eq(users.username, username))
-          .limit(1);
+          // Select user fields necessary for authentication
+          const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
 
-        if (!user) {
-          console.log(`[Auth] User not found: ${username}`);
-          return done(null, false, { message: "Incorrect username." });
+          if (!user) {
+            console.log(`[Auth] User not found: ${email}`);
+            return done(null, false, { message: "Incorrect email or password" });
+          }
+
+          console.log(`[Auth] Verifying password for user: ${email}`);
+          const isMatch = await crypto.compare(password, user.password);
+
+          if (!isMatch) {
+            console.log(`[Auth] Password verification failed for user: ${email}`);
+            return done(null, false, { message: "Incorrect email or password" });
+          }
+
+          console.log(`[Auth] Login successful for user: ${email}`);
+          return done(null, user);
+        } catch (err) {
+          console.error("[Auth] Login error:", err);
+          return done(err);
         }
-
-        console.log(`[Auth] Verifying password for user: ${username}`);
-        const isMatch = await crypto.compare(password, user.password);
-
-        if (!isMatch) {
-          console.log(`[Auth] Password verification failed for user: ${username}`);
-          return done(null, false, { message: "Incorrect password." });
-        }
-
-        console.log(`[Auth] Login successful for user: ${username}`);
-        return done(null, user);
-      } catch (err) {
-        console.error("[Auth] Login error:", err);
-        return done(err);
       }
-    })
+    )
   );
 
   passport.serializeUser((user, done) => {
@@ -106,15 +105,8 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       console.log(`[Auth] Deserializing user: ${id}`);
-      // Only select necessary fields for session
       const [user] = await db
-        .select({
-          id: users.id,
-          username: users.username,
-          email: users.email,
-          fullName: users.fullName,
-          userType: users.userType,
-        })
+        .select()
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
@@ -133,27 +125,27 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      console.log("Registration attempt:", req.body);
+      console.log("[Auth] Registration attempt:", req.body);
 
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
         const errorMessage = result.error.issues.map(i => i.message).join(", ");
-        console.log("Registration validation failed:", errorMessage);
-        return res.status(400).send("Invalid input: " + errorMessage);
+        console.log("[Auth] Registration validation failed:", errorMessage);
+        return res.status(400).json({ message: "Invalid input: " + errorMessage });
       }
 
-      const { username, password, email, userType, fullName } = result.data;
+      const { email, password, userType, fullName } = result.data;
 
       // Check if user already exists
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username))
+        .where(eq(users.email, email))
         .limit(1);
 
       if (existingUser) {
-        console.log(`Registration failed: Username ${username} already exists`);
-        return res.status(400).send("Username already exists");
+        console.log(`[Auth] Registration failed: Email ${email} already exists`);
+        return res.status(400).json({ message: "Email already exists" });
       }
 
       // Hash the password
@@ -163,26 +155,24 @@ export function setupAuth(app: Express) {
       const [newUser] = await db
         .insert(users)
         .values({
-          username,
-          password: hashedPassword,
           email,
+          password: hashedPassword,
           userType,
           fullName,
         })
         .returning();
 
-      console.log(`User registered successfully: ${username}`);
+      console.log(`[Auth] User registered successfully: ${email}`);
 
       req.login(newUser, (err) => {
         if (err) {
-          console.error("Login after registration failed:", err);
+          console.error("[Auth] Login after registration failed:", err);
           return next(err);
         }
         return res.json({
           message: "Registration successful",
           user: {
             id: newUser.id,
-            username: newUser.username,
             email: newUser.email,
             userType: newUser.userType,
             fullName: newUser.fullName,
@@ -190,15 +180,21 @@ export function setupAuth(app: Express) {
         });
       });
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("[Auth] Registration error:", error);
       next(error);
     }
   });
 
   app.post("/api/login", (req, res, next) => {
-    console.log("[Auth] Login attempt:", { username: req.body.username });
+    console.log("[Auth] Login attempt body:", req.body);
 
-    passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).json({ 
+        message: "Missing credentials. Both email and password are required." 
+      });
+    }
+
+    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
       if (err) {
         console.error("[Auth] Authentication error:", err);
         return res.status(500).json({ message: "Internal server error" });
@@ -206,7 +202,7 @@ export function setupAuth(app: Express) {
 
       if (!user) {
         console.log("[Auth] Authentication failed:", info.message);
-        return res.status(400).json({ message: info.message ?? "Login failed" });
+        return res.status(400).json({ message: info.message ?? "Invalid credentials" });
       }
 
       req.logIn(user, (err) => {
@@ -215,12 +211,11 @@ export function setupAuth(app: Express) {
           return res.status(500).json({ message: "Internal server error" });
         }
 
-        console.log(`[Auth] Login successful for user: ${user.username}`);
+        console.log(`[Auth] Login successful for user: ${user.email}`);
         return res.json({
           message: "Login successful",
           user: {
             id: user.id,
-            username: user.username,
             email: user.email,
             userType: user.userType,
             fullName: user.fullName,
@@ -231,15 +226,15 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
-    const username = req.user?.username;
-    console.log(`[Auth] Logout attempt for user: ${username}`);
+    const email = req.user?.email;
+    console.log(`[Auth] Logout attempt for user: ${email}`);
 
     req.logout((err) => {
       if (err) {
         console.error("[Auth] Logout error:", err);
         return res.status(500).json({ message: "Logout failed" });
       }
-      console.log(`[Auth] Logout successful for user: ${username}`);
+      console.log(`[Auth] Logout successful for user: ${email}`);
       res.json({ message: "Logout successful" });
     });
   });
@@ -247,10 +242,10 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (req.isAuthenticated()) {
       const user = req.user;
-      console.log(`[Auth] Current user session: ${user.username}`);
+      console.log(`[Auth] Current user session: ${user.email}`);
       return res.json(user);
     }
     console.log("[Auth] No authenticated user session found");
-    res.status(401).send("Not logged in");
+    res.status(401).json({ message: "Not logged in" });
   });
 }
