@@ -58,42 +58,36 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password'
-      },
-      async (email: string, password: string, done) => {
-        try {
-          console.log(`[Auth] Attempting login for email: ${email}`);
+    new LocalStrategy(async (username, password, done) => {
+      try {
+        console.log(`[Auth] Attempting login for username: ${username}`);
 
-          const [user] = await db
-            .select()
-            .from(users)
-            .where(eq(users.email, email))
-            .limit(1);
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.username, username))
+          .limit(1);
 
-          if (!user) {
-            console.log(`[Auth] User not found: ${email}`);
-            return done(null, false, { message: "Incorrect email or password" });
-          }
-
-          console.log(`[Auth] Verifying password for user: ${email}`);
-          const isMatch = await crypto.compare(password, user.password);
-
-          if (!isMatch) {
-            console.log(`[Auth] Password verification failed for user: ${email}`);
-            return done(null, false, { message: "Incorrect email or password" });
-          }
-
-          console.log(`[Auth] Login successful for user: ${email}`);
-          return done(null, user);
-        } catch (err) {
-          console.error("[Auth] Login error:", err);
-          return done(err);
+        if (!user) {
+          console.log(`[Auth] User not found: ${username}`);
+          return done(null, false, { message: "Incorrect username or password" });
         }
+
+        console.log(`[Auth] Verifying password for user: ${username}`);
+        const isMatch = await crypto.compare(password, user.password);
+
+        if (!isMatch) {
+          console.log(`[Auth] Password verification failed for user: ${username}`);
+          return done(null, false, { message: "Incorrect username or password" });
+        }
+
+        console.log(`[Auth] Login successful for user: ${username}`);
+        return done(null, user);
+      } catch (err) {
+        console.error("[Auth] Login error:", err);
+        return done(err);
       }
-    )
+    })
   );
 
   passport.serializeUser((user, done) => {
@@ -122,6 +116,46 @@ export function setupAuth(app: Express) {
     }
   });
 
+  app.post("/api/login", (req, res, next) => {
+    console.log("[Auth] Login attempt body:", req.body);
+
+    if (!req.body.username || !req.body.password) {
+      return res.status(400).json({ 
+        message: "Missing credentials. Both username and password are required." 
+      });
+    }
+
+    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
+      if (err) {
+        console.error("[Auth] Authentication error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+      }
+
+      if (!user) {
+        console.log("[Auth] Authentication failed:", info.message);
+        return res.status(400).json({ message: info.message ?? "Invalid credentials" });
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error("[Auth] Login error:", err);
+          return res.status(500).json({ message: "Internal server error" });
+        }
+
+        console.log(`[Auth] Login successful for user: ${user.username}`);
+        return res.json({
+          message: "Login successful",
+          user: {
+            id: user.id,
+            username: user.username,
+            userType: user.userType,
+            fullName: user.fullName,
+          },
+        });
+      });
+    })(req, res, next);
+  });
+
   app.post("/api/register", async (req, res, next) => {
     try {
       console.log("[Auth] Registration attempt:", req.body);
@@ -133,18 +167,18 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Invalid input: " + errorMessage });
       }
 
-      const { email, password, fullName, userType, ...otherData } = result.data;
+      const { email, password, fullName, userType, username, ...otherData } = result.data;
 
       // Check if user already exists
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.email, email))
+        .where(eq(users.username, username))
         .limit(1);
 
       if (existingUser) {
-        console.log(`[Auth] Registration failed: Email ${email} already exists`);
-        return res.status(400).json({ message: "Email already exists" });
+        console.log(`[Auth] Registration failed: Username ${username} already exists`);
+        return res.status(400).json({ message: "Username already exists" });
       }
 
       // Hash the password
@@ -158,6 +192,7 @@ export function setupAuth(app: Express) {
           password: hashedPassword,
           fullName,
           userType,
+          username,
           notificationPreferences: {
             email: true,
             sms: true,
@@ -183,7 +218,7 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
-      console.log(`[Auth] User registered successfully: ${email}`);
+      console.log(`[Auth] User registered successfully: ${username}`);
 
       req.login(newUser, (err) => {
         if (err) {
@@ -194,7 +229,7 @@ export function setupAuth(app: Express) {
           message: "Registration successful",
           user: {
             id: newUser.id,
-            email: newUser.email,
+            username: newUser.username,
             userType: newUser.userType,
             fullName: newUser.fullName,
           },
@@ -206,56 +241,16 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    console.log("[Auth] Login attempt body:", req.body);
-
-    if (!req.body.email || !req.body.password) {
-      return res.status(400).json({ 
-        message: "Missing credentials. Both email and password are required." 
-      });
-    }
-
-    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
-      if (err) {
-        console.error("[Auth] Authentication error:", err);
-        return res.status(500).json({ message: "Internal server error" });
-      }
-
-      if (!user) {
-        console.log("[Auth] Authentication failed:", info.message);
-        return res.status(400).json({ message: info.message ?? "Invalid credentials" });
-      }
-
-      req.logIn(user, (err) => {
-        if (err) {
-          console.error("[Auth] Login error:", err);
-          return res.status(500).json({ message: "Internal server error" });
-        }
-
-        console.log(`[Auth] Login successful for user: ${user.email}`);
-        return res.json({
-          message: "Login successful",
-          user: {
-            id: user.id,
-            email: user.email,
-            userType: user.userType,
-            fullName: user.fullName,
-          },
-        });
-      });
-    })(req, res, next);
-  });
-
   app.post("/api/logout", (req, res) => {
-    const email = req.user?.email;
-    console.log(`[Auth] Logout attempt for user: ${email}`);
+    const username = req.user?.username;
+    console.log(`[Auth] Logout attempt for user: ${username}`);
 
     req.logout((err) => {
       if (err) {
         console.error("[Auth] Logout error:", err);
         return res.status(500).json({ message: "Logout failed" });
       }
-      console.log(`[Auth] Logout successful for user: ${email}`);
+      console.log(`[Auth] Logout successful for user: ${username}`);
       res.json({ message: "Logout successful" });
     });
   });
@@ -263,7 +258,7 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (req.isAuthenticated()) {
       const user = req.user;
-      console.log(`[Auth] Current user session: ${user.email}`);
+      console.log(`[Auth] Current user session: ${user.username}`);
       return res.json(user);
     }
     console.log("[Auth] No authenticated user session found");
