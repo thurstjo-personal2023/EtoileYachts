@@ -382,7 +382,10 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Profile Visibility</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || 'private'}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select visibility" />
@@ -392,6 +395,7 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
                       <SelectItem value="public">Public</SelectItem>
                       <SelectItem value="private">Private</SelectItem>
                       <SelectItem value="registered">Registered Users Only</SelectItem>
+                      <SelectItem value="verified">Verified Users Only</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -401,18 +405,27 @@ export function ConsumerProfileFields({ form }: ConsumerProfileFieldsProps) {
 
             <FormField
               control={form.control}
-              name="notificationPreferences.email"
+              name="privacySettings.contactInfoVisibility"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Email Notifications</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Contact Information Visibility</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || 'private'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="registered">Registered Users Only</SelectItem>
+                      <SelectItem value="verified">Verified Users Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
