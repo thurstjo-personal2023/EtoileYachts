@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { YachtDetailsForm } from "./YachtDetailsForm";
 import {
   User,
   Briefcase,
@@ -51,9 +52,9 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           <Briefcase className="w-4 h-4 mr-2" />
           Professional
         </TabsTrigger>
-        <TabsTrigger value="vessels">
+        <TabsTrigger value="yacht">
           <Ship className="w-4 h-4 mr-2" />
-          Vessels
+          Yacht
         </TabsTrigger>
         <TabsTrigger value="certifications">
           <ShieldCheck className="w-4 h-4 mr-2" />
@@ -320,13 +321,11 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           />
         </div>
       </TabsContent>
-      <TabsContent value="vessels" className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Ship className="h-5 w-5 text-primary" />
-          <h3 className="font-medium">Yacht Details</h3>
-        </div>
+
+      <TabsContent value="yacht" className="space-y-6">
         <YachtDetailsForm form={form} />
       </TabsContent>
+
       <TabsContent value="certifications" className="space-y-6">
         <FormField
           control={form.control}

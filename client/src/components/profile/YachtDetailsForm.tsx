@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,50 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ship, Anchor, Gauge, Map, Heart, Shield, CreditCard } from "lucide-react";
+import { Ship, Anchor, Gauge, Map, Heart, Shield, CreditCard, Plus, Trash2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Textarea } from "@/components/ui/textarea";
+
+// Define form schema for validation
+const vesselSchema = z.object({
+  name: z.string().min(1, "Vessel name is required"),
+  type: z.string().min(1, "Vessel type is required"),
+  manufacturer: z.string().min(1, "Manufacturer is required"),
+  model: z.string(),
+  year: z.number().min(1900).max(new Date().getFullYear()),
+  registration: z.object({
+    number: z.string(),
+    country: z.string(),
+    port: z.string()
+  }),
+  specifications: z.object({
+    length: z.number().min(0),
+    beam: z.number().min(0),
+    draft: z.number().min(0),
+    grossTonnage: z.number().min(0),
+    engineHours: z.number().min(0),
+    fuelCapacity: z.number().min(0),
+    waterCapacity: z.number().min(0),
+    maxSpeed: z.number().min(0),
+    cruisingSpeed: z.number().min(0),
+    range: z.number().min(0)
+  }),
+  capacity: z.object({
+    guests: z.object({
+      day: z.number().min(0),
+      overnight: z.number().min(0)
+    }),
+    cabins: z.object({
+      guest: z.number().min(0),
+      crew: z.number().min(0)
+    }),
+    crew: z.object({
+      minimum: z.number().min(0),
+      maximum: z.number().min(0)
+    })
+  })
+});
 
 interface YachtDetailsFormProps {
   form: ReturnType<typeof useForm>;
@@ -19,34 +61,29 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
       <TabsList className="grid grid-cols-7">
         <TabsTrigger value="basic">Basic</TabsTrigger>
         <TabsTrigger value="technical">Technical</TabsTrigger>
-        <TabsTrigger value="engine">Engine</TabsTrigger>
-        <TabsTrigger value="amenities">Amenities</TabsTrigger>
-        <TabsTrigger value="safety">Safety</TabsTrigger>
-        <TabsTrigger value="location">Location</TabsTrigger>
-        <TabsTrigger value="pricing">Pricing</TabsTrigger>
+        <TabsTrigger value="specifications">Specifications</TabsTrigger>
+        <TabsTrigger value="capacity">Capacity</TabsTrigger>
+        <TabsTrigger value="features">Features</TabsTrigger>
+        <TabsTrigger value="media">Media</TabsTrigger>
+        <TabsTrigger value="documents">Documents</TabsTrigger>
       </TabsList>
 
-      {/* Existing Basic Tab Content */}
       <TabsContent value="basic" className="space-y-6">
-        {/* Keep existing basic info content */}
-      </TabsContent>
-
-      <TabsContent value="technical" className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-6">
-              <Anchor className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Technical Details</h3>
+              <Ship className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-medium">Basic Information</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="construction"
+                name="vessels[0].name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Construction Material</FormLabel>
+                    <FormLabel>Vessel Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Enter vessel name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -54,12 +91,35 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
               />
               <FormField
                 control={form.control}
-                name="designer"
+                name="vessels[0].type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Designer</FormLabel>
+                    <FormLabel>Vessel Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select vessel type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="motor_yacht">Motor Yacht</SelectItem>
+                        <SelectItem value="sailing_yacht">Sailing Yacht</SelectItem>
+                        <SelectItem value="catamaran">Catamaran</SelectItem>
+                        <SelectItem value="gulet">Gulet</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].manufacturer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Manufacturer</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Enter manufacturer" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -67,12 +127,31 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
               />
               <FormField
                 control={form.control}
-                name="classification"
+                name="vessels[0].model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Classification</FormLabel>
+                    <FormLabel>Model</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Enter model" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value))}
+                        min={1900}
+                        max={new Date().getFullYear()}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -83,169 +162,135 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
         </Card>
       </TabsContent>
 
-      {/* Keep existing engine tab */}
-      <TabsContent value="engine" className="space-y-6">
-        {/* Keep existing engine content */}
+      <TabsContent value="specifications" className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Gauge className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-medium">Specifications</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="vessels[0].specifications.length"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Length (m)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                        min={0}
+                        step={0.1}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].specifications.beam"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Beam (m)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                        min={0}
+                        step={0.1}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].specifications.draft"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Draft (m)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                        min={0}
+                        step={0.1}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].specifications.grossTonnage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gross Tonnage</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                        min={0}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
-      <TabsContent value="amenities" className="space-y-6">
+      <TabsContent value="capacity" className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-6">
               <Heart className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Amenities</h3>
-            </div>
-            {["entertainment", "deck", "waterToys", "interior"].map((category) => (
-              <FormField
-                key={category}
-                control={form.control}
-                name={`amenities.${category}`}
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel className="capitalize">{category}</FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* Add checkboxes for common amenities in each category */}
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="safety" className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Shield className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Safety & Certifications</h3>
-            </div>
-            <FormField
-              control={form.control}
-              name="safetyEquipment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Safety Equipment</FormLabel>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Add checkboxes for safety equipment */}
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastSafetyInspection"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Safety Inspection</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="location" className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Map className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Location</h3>
+              <h3 className="text-lg font-medium">Capacity</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="currentLocation.port"
+                name="vessels[0].capacity.guests.day"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current Port</FormLabel>
+                    <FormLabel>Day Guests</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value))}
+                        min={0}
+                      />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="currentLocation.country"
+                name="vessels[0].capacity.guests.overnight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Country</FormLabel>
+                    <FormLabel>Overnight Guests</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(parseInt(e.target.value))}
+                        min={0}
+                      />
                     </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="pricing" className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-6">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Pricing</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="pricing.baseDayRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Base Day Rate</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pricing.baseWeekRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Base Week Rate</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pricing.taxRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tax Rate (%)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pricing.currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

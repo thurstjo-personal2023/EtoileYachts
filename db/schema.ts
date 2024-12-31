@@ -27,6 +27,135 @@ export const users = pgTable("users", {
   preferredCurrency: text("preferred_currency"),
   bio: text("bio"),
 
+  // Producer Profile
+  producerProfile: jsonb("producer_profile").$type<{
+    role: "yacht_owner" | "captain" | "crew" | "manager";
+    experience: {
+      yearsOfExperience: number;
+      qualifications: Array<{
+        type: string;
+        name: string;
+        issuingAuthority: string;
+        issueDate: string;
+        expiryDate: string;
+        documentUrl: string;
+        verificationStatus: "pending" | "verified" | "expired";
+      }>;
+      specialties: string[];
+      languages: Array<{
+        language: string;
+        proficiency: "basic" | "intermediate" | "fluent" | "native";
+      }>;
+    };
+    vessels: Array<{
+      name: string;
+      type: string;
+      manufacturer: string;
+      model: string;
+      year: number;
+      registration: {
+        number: string;
+        country: string;
+        port: string;
+      };
+      specifications: {
+        length: number;
+        beam: number;
+        draft: number;
+        grossTonnage: number;
+        engineHours: number;
+        fuelCapacity: number;
+        waterCapacity: number;
+        maxSpeed: number;
+        cruisingSpeed: number;
+        range: number;
+      };
+      capacity: {
+        guests: {
+          day: number;
+          overnight: number;
+        };
+        cabins: {
+          guest: number;
+          crew: number;
+        };
+        crew: {
+          minimum: number;
+          maximum: number;
+        };
+      };
+      features: {
+        navigation: string[];
+        safety: string[];
+        entertainment: string[];
+        waterSports: string[];
+        amenities: string[];
+      };
+      media: {
+        images: Array<{
+          url: string;
+          type: "exterior" | "interior" | "aerial" | "detail";
+          isFeatured: boolean;
+          caption: string;
+        }>;
+        videos: Array<{
+          url: string;
+          thumbnail: string;
+          title: string;
+          description: string;
+        }>;
+        virtualTours: Array<{
+          url: string;
+          title: string;
+          description: string;
+        }>;
+      };
+      documents: Array<{
+        type: string;
+        number: string;
+        issueDate: string;
+        expiryDate: string;
+        documentUrl: string;
+        verificationStatus: "pending" | "verified" | "expired";
+      }>;
+      maintenance: Array<{
+        type: string;
+        date: string;
+        description: string;
+        provider: string;
+        cost: number;
+        nextDueDate: string;
+        documents: Array<{
+          type: string;
+          url: string;
+          description: string;
+        }>;
+      }>;
+    }>;
+    certifications: Array<{
+      type: string;
+      name: string;
+      issuingAuthority: string;
+      issueDate: string;
+      expiryDate: string;
+      documentUrl: string;
+      verificationStatus: "pending" | "verified" | "expired";
+    }>;
+    availability: {
+      schedule: Array<{
+        day: string;
+        startTime: string;
+        endTime: string;
+      }>;
+      seasonalAvailability: {
+        summer: boolean;
+        winter: boolean;
+        spring: boolean;
+        fall: boolean;
+      };
+    };
+  }>(),
+
   // Contact Information
   address: jsonb("address").$type<{
     street: string;
