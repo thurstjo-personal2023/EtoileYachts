@@ -20,6 +20,77 @@ export const users = pgTable("users", {
   nationality: text("nationality"),
   preferredLanguage: text("preferred_language"),
   preferredCurrency: text("preferred_currency"),
+  producerProfile: jsonb("producer_profile").$type<{
+    personalInfo: {
+      fullName: string;
+      email: string;
+      phoneNumber: string;
+      dateOfBirth: string | null;
+      nationality: string;
+      languages: string[];
+      address: string;
+    };
+    professionalInfo: {
+      role: "yacht_owner" | "captain" | "crew" | "manager" | null;
+      experience: {
+        yearsOfExperience: number;
+        specialties: string[];
+        previousRoles: string[];
+      };
+      certifications: Array<{
+        type: string;
+        name: string;
+        issuingAuthority: string;
+        issueDate: string;
+        expiryDate: string;
+      }>;
+    };
+    yachtDetails: Array<{
+      name: string;
+      type: string;
+      manufacturer: string;
+      model: string;
+      year: number | null;
+      length: number | null;
+      capacity: {
+        guests: number | null;
+        crew: number | null;
+      };
+      features: string[];
+      images: Array<{
+        url: string;
+        type: "exterior" | "interior";
+        isFeatured: boolean;
+      }>;
+      documents: Array<{
+        type: string;
+        url: string;
+        expiryDate: string | null;
+      }>;
+    }>;
+    availability: {
+      schedule: Array<{
+        day: string;
+        startTime: string;
+        endTime: string;
+      }>;
+      preferences: {
+        minimumDuration: number | null;
+        maximumDuration: number | null;
+        noticeRequired: number | null;
+        seasonalPreferences: string[];
+      };
+    };
+    notificationSettings: {
+      email: boolean;
+      sms: boolean;
+      pushNotifications: boolean;
+      bookingReminders: boolean;
+      paymentAlerts: boolean;
+      maintenanceAlerts: boolean;
+      weatherAlerts: boolean;
+    };
+  }>(),
   notificationPreferences: jsonb("notification_preferences").$type<{
     email: boolean;
     sms: boolean;
@@ -46,7 +117,7 @@ export const users = pgTable("users", {
   }).default("unverified"),
   lastActive: timestamp("last_active"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Create schemas for users with proper validation
