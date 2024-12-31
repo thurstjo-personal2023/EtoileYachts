@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { bookings, services, insertBookingSchema } from "@db/schema";
+import { bookings, users, insertBookingSchema } from "@db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 const router = Router();
@@ -13,16 +13,13 @@ router.get("/", async (req, res) => {
     }
 
     const userBookings = await db.query.bookings.findMany({
-      with: {
-        service: {
-          columns: {
-            providerId: true
-          }
-        }
-      },
       where: req.user.userType === "consumer" 
         ? eq(bookings.consumerId, req.user.id)
-        : eq(services.providerId, req.user.id)
+        : eq(bookings.providerId, req.user.id),
+      with: {
+        consumer: true,
+        provider: true,
+      }
     });
 
     res.json(userBookings);
@@ -41,11 +38,8 @@ router.get("/:id", async (req, res) => {
     const booking = await db.query.bookings.findFirst({
       where: eq(bookings.id, parseInt(req.params.id)),
       with: {
-        service: {
-          columns: {
-            providerId: true
-          }
-        }
+        consumer: true,
+        provider: true,
       }
     });
 
@@ -56,7 +50,7 @@ router.get("/:id", async (req, res) => {
     // Check if user has access to this booking
     if (
       req.user.userType === "consumer" && booking.consumerId !== req.user.id ||
-      req.user.userType === "producer" && booking.service.providerId !== req.user.id
+      req.user.userType === "producer" && booking.providerId !== req.user.id
     ) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -82,21 +76,24 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const { serviceId, startTime, endTime } = result.data;
+    const { providerId, startTime, endTime, serviceType } = result.data;
 
-    // Check if service exists
-    const service = await db.query.services.findFirst({
-      where: eq(services.id, serviceId)
+    // Check if provider exists and is a producer
+    const provider = await db.query.users.findFirst({
+      where: and(
+        eq(users.id, providerId),
+        eq(users.userType, "producer")
+      )
     });
 
-    if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
     }
 
     // Check for booking conflicts
     const conflicts = await db.query.bookings.findMany({
       where: and(
-        eq(bookings.serviceId, serviceId),
+        eq(bookings.providerId, providerId),
         eq(bookings.status, "confirmed"),
         gte(bookings.startTime, new Date(startTime)),
         lte(bookings.endTime, new Date(endTime))
@@ -107,19 +104,21 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Time slot not available" });
     }
 
-    // Calculate total amount based on service price and duration
+    // Calculate total amount based on provider's base rate and duration
     const hours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60 * 60);
-    const totalAmount = (Number(service.price) * hours).toFixed(2);
+    const baseRate = provider.availability?.pricing?.baseRate ?? 0;
+    const totalAmount = (baseRate * hours).toFixed(2);
 
     const [newBooking] = await db
       .insert(bookings)
       .values({
-        serviceId: serviceId,
+        providerId,
         consumerId: req.user.id,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
+        serviceType,
         status: "pending",
-        totalAmount: totalAmount,
+        totalAmount,
         paymentStatus: "pending"
       })
       .returning();
@@ -143,10 +142,7 @@ router.patch("/:id/status", async (req, res) => {
     }
 
     const booking = await db.query.bookings.findFirst({
-      where: eq(bookings.id, parseInt(req.params.id)),
-      with: {
-        service: true
-      }
+      where: eq(bookings.id, parseInt(req.params.id))
     });
 
     if (!booking) {
@@ -154,7 +150,7 @@ router.patch("/:id/status", async (req, res) => {
     }
 
     // Only service providers can update booking status
-    if (booking.service.providerId !== req.user.id) {
+    if (booking.providerId !== req.user.id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 

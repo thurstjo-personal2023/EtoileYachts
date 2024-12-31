@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { vessels, insertVesselSchema } from "@db/schema";
+import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import type { RequestHandler } from "express";
 
@@ -17,13 +17,41 @@ const requireAuth: RequestHandler = (req, res, next) => {
 // Get all yachts
 router.get("/", async (req, res) => {
   try {
-    const allYachts = await db.query.vessels.findMany({
-      with: {
-        owner: true
+    const producers = await db.query.users.findMany({
+      where: eq(users.userType, "producer"),
+      columns: {
+        id: true,
+        fullName: true,
+        businessName: true,
+        email: true,
+        phoneNumber: true,
+        profileImage: true,
+        producerProfile: true,
+        availability: true,
+        mediaGallery: true,
+        verificationStatus: true,
       }
     });
-    res.json(allYachts);
+
+    // Transform the data to return only yacht details
+    const yachts = producers.flatMap(producer => {
+      return producer.producerProfile?.yachtDetails?.map(yacht => ({
+        id: `${producer.id}-${yacht.name}`, // Create a unique ID
+        ownerId: producer.id,
+        ownerName: producer.fullName,
+        businessName: producer.businessName,
+        ...yacht,
+        pricing: producer.availability?.pricing,
+        media: producer.mediaGallery?.photos?.filter(
+          photo => photo.type === "yacht_exterior" || photo.type === "yacht_interior"
+        ),
+        verificationStatus: producer.verificationStatus
+      })) || [];
+    });
+
+    res.json(yachts);
   } catch (error) {
+    console.error("Error fetching yachts:", error);
     res.status(500).json({ message: "Error fetching yachts", error });
   }
 });
@@ -31,108 +59,111 @@ router.get("/", async (req, res) => {
 // Get a specific yacht
 router.get("/:id", async (req, res) => {
   try {
-    const yacht = await db.query.vessels.findFirst({
-      where: eq(vessels.id, parseInt(req.params.id)),
-      with: {
-        owner: true
+    const [ownerId, yachtName] = req.params.id.split("-");
+
+    const producer = await db.query.users.findFirst({
+      where: eq(users.id, parseInt(ownerId)),
+      columns: {
+        id: true,
+        fullName: true,
+        businessName: true,
+        email: true,
+        phoneNumber: true,
+        profileImage: true,
+        producerProfile: true,
+        availability: true,
+        mediaGallery: true,
+        verificationStatus: true,
       }
     });
+
+    if (!producer) {
+      return res.status(404).json({ message: "Yacht owner not found" });
+    }
+
+    const yacht = producer.producerProfile?.yachtDetails?.find(
+      yacht => yacht.name === yachtName
+    );
 
     if (!yacht) {
       return res.status(404).json({ message: "Yacht not found" });
     }
 
-    res.json(yacht);
+    res.json({
+      id: req.params.id,
+      ownerId: producer.id,
+      ownerName: producer.fullName,
+      businessName: producer.businessName,
+      ...yacht,
+      pricing: producer.availability?.pricing,
+      media: producer.mediaGallery?.photos?.filter(
+        photo => photo.type === "yacht_exterior" || photo.type === "yacht_interior"
+      ),
+      verificationStatus: producer.verificationStatus
+    });
   } catch (error) {
+    console.error("Error fetching yacht:", error);
     res.status(500).json({ message: "Error fetching yacht", error });
   }
 });
 
-// Create a new yacht
-router.post("/", requireAuth, async (req, res) => {
-  try {
-    const result = insertVesselSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({
-        message: "Invalid input",
-        errors: result.error.issues.map(i => i.message),
-      });
-    }
-
-    const [newYacht] = await db
-      .insert(vessels)
-      .values({
-        ...result.data,
-        ownerId: req.user!.id,
-      })
-      .returning();
-
-    res.status(201).json(newYacht);
-  } catch (error) {
-    res.status(500).json({ message: "Error creating yacht", error });
-  }
-});
-
-// Update a yacht
+// Update yacht details
 router.put("/:id", requireAuth, async (req, res) => {
   try {
-    const yacht = await db.query.vessels.findFirst({
-      where: eq(vessels.id, parseInt(req.params.id))
-    });
+    const [ownerId] = req.params.id.split("-");
 
-    if (!yacht) {
-      return res.status(404).json({ message: "Yacht not found" });
-    }
-
-    if (yacht.ownerId !== req.user!.id) {
+    // Only allow producers to update their own yachts
+    if (
+      req.user?.userType !== "producer" || 
+      req.user?.id !== parseInt(ownerId)
+    ) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const result = insertVesselSchema.partial().safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({
-        message: "Invalid input",
-        errors: result.error.issues.map(i => i.message),
-      });
+    const producer = await db.query.users.findFirst({
+      where: eq(users.id, parseInt(ownerId))
+    });
+
+    if (!producer) {
+      return res.status(404).json({ message: "Producer not found" });
     }
 
-    const [updatedYacht] = await db
-      .update(vessels)
+    // Update the yacht details in the producer's profile
+    const updatedProfile = {
+      ...producer.producerProfile,
+      yachtDetails: producer.producerProfile?.yachtDetails?.map(yacht => 
+        yacht.name === req.body.name ? { ...yacht, ...req.body } : yacht
+      )
+    };
+
+    const [updatedProducer] = await db
+      .update(users)
       .set({
-        ...result.data,
-        updatedAt: new Date(),
+        producerProfile: updatedProfile,
+        updatedAt: new Date()
       })
-      .where(eq(vessels.id, parseInt(req.params.id)))
+      .where(eq(users.id, parseInt(ownerId)))
       .returning();
 
-    res.json(updatedYacht);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating yacht", error });
-  }
-});
+    const updatedYacht = updatedProducer.producerProfile?.yachtDetails?.find(
+      yacht => yacht.name === req.body.name
+    );
 
-// Delete a yacht
-router.delete("/:id", requireAuth, async (req, res) => {
-  try {
-    const yacht = await db.query.vessels.findFirst({
-      where: eq(vessels.id, parseInt(req.params.id))
+    res.json({
+      id: req.params.id,
+      ownerId: updatedProducer.id,
+      ownerName: updatedProducer.fullName,
+      businessName: updatedProducer.businessName,
+      ...updatedYacht,
+      pricing: updatedProducer.availability?.pricing,
+      media: updatedProducer.mediaGallery?.photos?.filter(
+        photo => photo.type === "yacht_exterior" || photo.type === "yacht_interior"
+      ),
+      verificationStatus: updatedProducer.verificationStatus
     });
-
-    if (!yacht) {
-      return res.status(404).json({ message: "Yacht not found" });
-    }
-
-    if (yacht.ownerId !== req.user!.id) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    await db
-      .delete(vessels)
-      .where(eq(vessels.id, parseInt(req.params.id)));
-
-    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ message: "Error deleting yacht", error });
+    console.error("Error updating yacht:", error);
+    res.status(500).json({ message: "Error updating yacht", error });
   }
 });
 

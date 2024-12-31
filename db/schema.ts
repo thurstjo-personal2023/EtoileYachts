@@ -215,7 +215,6 @@ export const users = pgTable("users", {
     }>;
   }>(),
 
-
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered" | "verified";
     contactInfoVisibility: "public" | "private" | "registered" | "verified";
@@ -239,7 +238,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// New Notifications table
+// Notifications table for Firebase Cloud Messaging integration
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
