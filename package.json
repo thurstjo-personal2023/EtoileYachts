@@ -11,6 +11,9 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@firebase/analytics": "^0.10.10",
+    "@firebase/app": "^0.10.17",
+    "@firebase/messaging": "^0.12.15",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -36,6 +39,7 @@
     "drizzle-zod": "^0.6.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
+    "firebase": "^11.1.0",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
     "passport": "^0.7.0",

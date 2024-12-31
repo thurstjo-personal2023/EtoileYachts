@@ -22,6 +22,28 @@ export const users = pgTable("users", {
   preferredLanguage: text("preferred_language"),
   preferredCurrency: text("preferred_currency"),
 
+  // Notification Settings
+  notificationPreferences: jsonb("notification_preferences").$type<{
+    email: boolean;
+    sms: boolean;
+    pushNotifications: boolean;
+    categories: {
+      booking: boolean;
+      payment: boolean;
+      maintenance: boolean;
+      weather: boolean;
+      system: boolean;
+      marketing: boolean;
+    };
+    frequency: "instant" | "daily" | "weekly";
+    quiet_hours: {
+      enabled: boolean;
+      start: string;
+      end: string;
+      timezone: string;
+    };
+  }>(),
+
   // Consumer Specific Fields
   consumerProfile: jsonb("consumer_profile").$type<{
     activityPreferences: string[];
@@ -193,16 +215,6 @@ export const users = pgTable("users", {
     }>;
   }>(),
 
-  // Common Settings
-  notificationPreferences: jsonb("notification_preferences").$type<{
-    email: boolean;
-    sms: boolean;
-    appNotifications: boolean;
-    marketingCommunications: boolean;
-    bookingUpdates: boolean;
-    paymentAlerts: boolean;
-    serviceUpdates: boolean;
-  }>(),
 
   privacySettings: jsonb("privacy_settings").$type<{
     profileVisibility: "public" | "private" | "registered" | "verified";
@@ -223,6 +235,33 @@ export const users = pgTable("users", {
   }).default("unverified"),
 
   lastActive: timestamp("last_active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// New Notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type", {
+    enum: ["booking", "message", "system", "payment", "maintenance", "weather"]
+  }).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  category: text("category").notNull(),
+  priority: text("priority", {
+    enum: ["low", "medium", "high", "urgent"]
+  }).default("medium"),
+  read: boolean("read").default(false),
+  actionUrl: text("action_url"),
+  metadata: jsonb("metadata").$type<{
+    bookingId?: number;
+    messageId?: number;
+    amount?: number;
+    location?: string;
+    [key: string]: any;
+  }>(),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -265,9 +304,16 @@ export const bookings = pgTable("bookings", {
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
+  notifications: many(notifications),
   bookings: many(bookings),
   reviews: many(reviews)
 }));
+
+// Create schemas for notifications
+export const insertNotificationSchema = createInsertSchema(notifications);
+export const selectNotificationSchema = createSelectSchema(notifications);
+export type InsertNotification = typeof notifications.$inferInsert;
+export type SelectNotification = typeof notifications.$inferSelect;
 
 // Schema exports
 export const insertUserSchema = createInsertSchema(users);
