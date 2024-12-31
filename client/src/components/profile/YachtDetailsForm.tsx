@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ship, Anchor, Gauge, Map, Heart, Shield, CreditCard, Plus, Trash2 } from "lucide-react";
+import { Ship, Gauge, Heart, Upload } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Textarea } from "@/components/ui/textarea";
 
 // Define form schema for validation
 const vesselSchema = z.object({
@@ -18,36 +17,28 @@ const vesselSchema = z.object({
   manufacturer: z.string().min(1, "Manufacturer is required"),
   model: z.string(),
   year: z.number().min(1900).max(new Date().getFullYear()),
-  registration: z.object({
-    number: z.string(),
-    country: z.string(),
-    port: z.string()
-  }),
   specifications: z.object({
-    length: z.number().min(0),
-    beam: z.number().min(0),
-    draft: z.number().min(0),
-    grossTonnage: z.number().min(0),
-    engineHours: z.number().min(0),
-    fuelCapacity: z.number().min(0),
-    waterCapacity: z.number().min(0),
-    maxSpeed: z.number().min(0),
-    cruisingSpeed: z.number().min(0),
-    range: z.number().min(0)
+    length: z.string().min(1, "Length is required"),
+    beam: z.string().min(1, "Beam is required"),
+    enginePower: z.string().min(1, "Engine power is required"),
+    fuelType: z.string().min(1, "Fuel type is required")
   }),
   capacity: z.object({
-    guests: z.object({
-      day: z.number().min(0),
-      overnight: z.number().min(0)
-    }),
-    cabins: z.object({
-      guest: z.number().min(0),
-      crew: z.number().min(0)
-    }),
-    crew: z.object({
-      minimum: z.number().min(0),
-      maximum: z.number().min(0)
-    })
+    guests: z.number().min(0),
+    crew: z.number().min(0)
+  }),
+  features: z.object({
+    amenities: z.array(z.string())
+  }),
+  media: z.object({
+    photos: z.array(z.object({
+      url: z.string(),
+      type: z.enum(["exterior", "interior"])
+    })),
+    videos: z.array(z.object({
+      url: z.string(),
+      type: z.string()
+    }))
   })
 });
 
@@ -55,17 +46,29 @@ interface YachtDetailsFormProps {
   form: ReturnType<typeof useForm>;
 }
 
+// Available amenities list
+const AMENITIES = [
+  "Spa",
+  "Dining Area",
+  "Sunbeds",
+  "Swimming Pool",
+  "Gym",
+  "Cinema Room",
+  "Jacuzzi",
+  "Beach Club",
+  "Wi-Fi",
+  "Air Conditioning"
+];
+
 export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
   return (
     <Tabs defaultValue="basic" className="w-full">
-      <TabsList className="grid grid-cols-7">
+      <TabsList className="grid grid-cols-5">
         <TabsTrigger value="basic">Basic</TabsTrigger>
-        <TabsTrigger value="technical">Technical</TabsTrigger>
         <TabsTrigger value="specifications">Specifications</TabsTrigger>
         <TabsTrigger value="capacity">Capacity</TabsTrigger>
         <TabsTrigger value="features">Features</TabsTrigger>
         <TabsTrigger value="media">Media</TabsTrigger>
-        <TabsTrigger value="documents">Documents</TabsTrigger>
       </TabsList>
 
       <TabsContent value="basic" className="space-y-6">
@@ -175,15 +178,9 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
                 name="vessels[0].specifications.length"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Length (m)</FormLabel>
+                    <FormLabel>Length</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        min={0}
-                        step={0.1}
-                      />
+                      <Input {...field} placeholder="Enter length" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,15 +191,9 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
                 name="vessels[0].specifications.beam"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Beam (m)</FormLabel>
+                    <FormLabel>Beam</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        min={0}
-                        step={0.1}
-                      />
+                      <Input {...field} placeholder="Enter beam" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,18 +201,12 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
               />
               <FormField
                 control={form.control}
-                name="vessels[0].specifications.draft"
+                name="vessels[0].specifications.enginePower"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Draft (m)</FormLabel>
+                    <FormLabel>Engine Power</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        min={0}
-                        step={0.1}
-                      />
+                      <Input {...field} placeholder="Enter engine power" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,17 +214,12 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
               />
               <FormField
                 control={form.control}
-                name="vessels[0].specifications.grossTonnage"
+                name="vessels[0].specifications.fuelType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gross Tonnage</FormLabel>
+                    <FormLabel>Fuel Type</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                        min={0}
-                      />
+                      <Input {...field} placeholder="Enter fuel type" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,10 +240,10 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="vessels[0].capacity.guests.day"
+                name="vessels[0].capacity.guests"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Day Guests</FormLabel>
+                    <FormLabel>Number of Guests</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -278,16 +258,117 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
               />
               <FormField
                 control={form.control}
-                name="vessels[0].capacity.guests.overnight"
+                name="vessels[0].capacity.crew"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Overnight Guests</FormLabel>
+                    <FormLabel>Number of Crew</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         {...field} 
                         onChange={e => field.onChange(parseInt(e.target.value))}
                         min={0}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="features" className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Heart className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-medium">Features</h3>
+            </div>
+            <FormField
+              control={form.control}
+              name="vessels[0].features.amenities"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="mb-4">
+                    <FormLabel>Amenities</FormLabel>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {AMENITIES.map((amenity) => (
+                      <FormField
+                        key={amenity}
+                        control={form.control}
+                        name={`vessels[0].features.amenities.${amenity}`} //Corrected name here
+                        render={({ field }) => (
+                          <FormItem key={amenity} className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value === amenity} //Corrected checked logic
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked ? amenity : null); //Simplified onChange
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">{amenity}</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="media" className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Upload className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-medium">Media</h3>
+            </div>
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="vessels[0].media.photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photos</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        {...field}
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          // Handle file upload logic here
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vessels[0].media.videos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Videos</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="video/*"
+                        multiple
+                        {...field}
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          // Handle file upload logic here
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
