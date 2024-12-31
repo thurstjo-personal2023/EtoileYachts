@@ -7,44 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Ship, Gauge, Heart, Upload } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
-// Define form schema for validation
-const vesselSchema = z.object({
-  name: z.string().min(1, "Vessel name is required"),
-  type: z.string().min(1, "Vessel type is required"),
-  manufacturer: z.string().min(1, "Manufacturer is required"),
-  model: z.string(),
-  year: z.number().min(1900).max(new Date().getFullYear()),
-  specifications: z.object({
-    length: z.string().min(1, "Length is required"),
-    beam: z.string().min(1, "Beam is required"),
-    enginePower: z.string().min(1, "Engine power is required"),
-    fuelType: z.string().min(1, "Fuel type is required")
-  }),
-  capacity: z.object({
-    guests: z.number().min(0),
-    crew: z.number().min(0)
-  }),
-  features: z.object({
-    amenities: z.array(z.string())
-  }),
-  media: z.object({
-    photos: z.array(z.object({
-      url: z.string(),
-      type: z.enum(["exterior", "interior"])
-    })),
-    videos: z.array(z.object({
-      url: z.string(),
-      type: z.string()
-    }))
-  })
-});
-
-interface YachtDetailsFormProps {
-  form: ReturnType<typeof useForm>;
-}
 
 // Available amenities list
 const AMENITIES = [
@@ -59,6 +22,10 @@ const AMENITIES = [
   "Wi-Fi",
   "Air Conditioning"
 ];
+
+interface YachtDetailsFormProps {
+  form: ReturnType<typeof useForm>;
+}
 
 export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
   return (
@@ -299,20 +266,34 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
                       <FormField
                         key={amenity}
                         control={form.control}
-                        name={`vessels[0].features.amenities.${amenity}`} //Corrected name here
-                        render={({ field }) => (
-                          <FormItem key={amenity} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value === amenity} //Corrected checked logic
-                                onCheckedChange={(checked) => {
-                                  field.onChange(checked ? amenity : null); //Simplified onChange
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{amenity}</FormLabel>
-                          </FormItem>
-                        )}
+                        name="vessels[0].features.amenities"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={amenity}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(amenity)}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...currentValue, amenity]);
+                                    } else {
+                                      field.onChange(
+                                        currentValue.filter((value) => value !== amenity)
+                                      );
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {amenity}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
                       />
                     ))}
                   </div>
@@ -342,10 +323,10 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
                         type="file"
                         accept="image/*"
                         multiple
-                        {...field}
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
                           // Handle file upload logic here
+                          field.onChange(files);
                         }}
                       />
                     </FormControl>
@@ -364,10 +345,10 @@ export function YachtDetailsForm({ form }: YachtDetailsFormProps) {
                         type="file"
                         accept="video/*"
                         multiple
-                        {...field}
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
                           // Handle file upload logic here
+                          field.onChange(files);
                         }}
                       />
                     </FormControl>
