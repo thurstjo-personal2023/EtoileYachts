@@ -12,20 +12,31 @@ const updateProfileSchema = z.object({
   phoneNumber: z.string().optional(),
   preferredLanguage: z.string().optional(),
   bio: z.string().optional(),
-  location: z.object({
-    country: z.string(),
-    city: z.string(),
-  }).optional(),
   notificationPreferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
     pushNotifications: z.boolean(),
+    categories: z.object({
+      booking: z.boolean(),
+      payment: z.boolean(),
+      maintenance: z.boolean(),
+      weather: z.boolean(),
+      system: z.boolean(),
+      marketing: z.boolean(),
+    }).optional(),
+    frequency: z.enum(["instant", "daily", "weekly"]).optional(),
+    quiet_hours: z.object({
+      enabled: z.boolean(),
+      start: z.string(),
+      end: z.string(),
+      timezone: z.string(),
+    }).optional(),
   }).optional(),
 });
 
 // FCM token update schema
 const updateFcmTokenSchema = z.object({
-  token: z.string(),
+  token: z.string().optional(), // Made token optional
 });
 
 // Get user profile
@@ -68,15 +79,14 @@ router.post("/fcm-token", async (req, res) => {
       });
     }
 
-    const [updatedUser] = await db
+    await db
       .update(users)
       .set({
         fcmToken: result.data.token,
         fcmTokenLastUpdated: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(users.id, req.user.id))
-      .returning();
+      .where(eq(users.id, req.user.id));
 
     res.json({ message: "FCM token updated successfully" });
   } catch (error) {
