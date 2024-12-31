@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox"; // Added import for Checkbox
 import { YachtDetailsForm } from "./YachtDetailsForm";
 import {
   User,
@@ -145,10 +146,8 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* Add nationality options */}
                     <SelectItem value="us">United States</SelectItem>
                     <SelectItem value="uk">United Kingdom</SelectItem>
-                    {/* Add more nationalities */}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -323,7 +322,204 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
       </TabsContent>
 
       <TabsContent value="yacht" className="space-y-6">
-        <YachtDetailsForm form={form} />
+        <Tabs defaultValue="basic">
+          <TabsList>
+            <TabsTrigger value="basic">Basic Information</TabsTrigger>
+            <TabsTrigger value="specifications">Specifications</TabsTrigger>
+            <TabsTrigger value="capacity">Capacity</TabsTrigger>
+            <TabsTrigger value="features">Features</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="yachtDetails.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Yacht Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter yacht name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="specifications" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="yachtDetails.specifications.length"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Length</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter length" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yachtDetails.specifications.beam"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Beam</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter beam" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yachtDetails.specifications.enginePower"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Engine Power</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter engine power" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yachtDetails.specifications.fuelType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fuel Type</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter fuel type" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="capacity" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="yachtDetails.capacity.guests"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Guest Capacity</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yachtDetails.capacity.crew"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Crew Capacity</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="features" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="yachtDetails.features.amenities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amenities</FormLabel>
+                  <div className="grid grid-cols-2 gap-4">
+                    {["Spa", "Dining Area", "Sunbeds", "Bar", "Gym", "Cinema", "WiFi", "Air Conditioning"].map((amenity) => (
+                      <div key={amenity} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={field.value?.includes(amenity)}
+                          onCheckedChange={(checked) => {
+                            const currentValue = field.value || [];
+                            if (checked) {
+                              field.onChange([...currentValue, amenity]);
+                            } else {
+                              field.onChange(currentValue.filter((val) => val !== amenity));
+                            }
+                          }}
+                        />
+                        <label className="text-sm">{amenity}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="yachtDetails.media.photos"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Photos</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        // You'll need to implement the actual file upload logic
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="yachtDetails.media.videos"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Videos</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        // You'll need to implement the actual file upload logic
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
 
       <TabsContent value="certifications" className="space-y-6">
@@ -472,6 +668,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           )}
         />
       </TabsContent>
+
       <TabsContent value="availability" className="space-y-6">
         <FormField
           control={form.control}
@@ -586,6 +783,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           )}
         />
       </TabsContent>
+
       <TabsContent value="notifications" className="space-y-6">
         <FormField
           control={form.control}
@@ -698,6 +896,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           )}
         />
       </TabsContent>
+
       <TabsContent value="settings" className="space-y-6">
         <FormField
           control={form.control}
