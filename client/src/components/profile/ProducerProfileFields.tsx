@@ -6,7 +6,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,23 +17,23 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
-  Plus,
-  Shield,
-  Book,
-  Globe,
-  Award,
-  FileText,
+  User,
+  Briefcase,
+  Ship,
+  ShieldCheck,
   Clock,
-  AlertCircle,
-  Anchor,
+  Bell,
+  Settings,
+  Phone,
+  Plus,
+  Trash2,
 } from "lucide-react";
-import { YachtDetailsForm } from "./YachtDetailsForm";
-import { ActivityDetailsForm } from "./ActivityDetailsForm";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 type ProducerProfileFieldsProps = {
   form: ReturnType<typeof useForm<any>>;
@@ -42,167 +41,292 @@ type ProducerProfileFieldsProps = {
 
 export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
   return (
-    <Tabs defaultValue="professional" className="w-full">
-      <TabsList className="grid grid-cols-4 lg:grid-cols-8">
-        <TabsTrigger value="professional">Professional</TabsTrigger>
-        <TabsTrigger value="yachts">Yachts</TabsTrigger>
-        <TabsTrigger value="services">Services</TabsTrigger>
-        <TabsTrigger value="certifications">Certifications</TabsTrigger>
-        <TabsTrigger value="availability">Availability</TabsTrigger>
-        <TabsTrigger value="insurance">Insurance</TabsTrigger>
-        <TabsTrigger value="emergency">Emergency</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
+    <Tabs defaultValue="personal" className="w-full">
+      <TabsList className="grid grid-cols-3 lg:grid-cols-7 w-full">
+        <TabsTrigger value="personal">
+          <User className="w-4 h-4 mr-2" />
+          Personal
+        </TabsTrigger>
+        <TabsTrigger value="professional">
+          <Briefcase className="w-4 h-4 mr-2" />
+          Professional
+        </TabsTrigger>
+        <TabsTrigger value="vessels">
+          <Ship className="w-4 h-4 mr-2" />
+          Vessels
+        </TabsTrigger>
+        <TabsTrigger value="certifications">
+          <ShieldCheck className="w-4 h-4 mr-2" />
+          Certifications
+        </TabsTrigger>
+        <TabsTrigger value="availability">
+          <Clock className="w-4 h-4 mr-2" />
+          Availability
+        </TabsTrigger>
+        <TabsTrigger value="notifications">
+          <Bell className="w-4 h-4 mr-2" />
+          Notifications
+        </TabsTrigger>
+        <TabsTrigger value="settings">
+          <Settings className="w-4 h-4 mr-2" />
+          Settings
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="professional" className="space-y-6">
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Professional Role</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+      <TabsContent value="personal" className="space-y-6">
+        <div className="grid gap-6">
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
+                  <Input {...field} placeholder="Enter your full name" />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="yacht_owner">Yacht Owner</SelectItem>
-                  <SelectItem value="captain">Captain</SelectItem>
-                  <SelectItem value="facilitator">Facilitator</SelectItem>
-                  <SelectItem value="crew_member">Crew Member</SelectItem>
-                  <SelectItem value="instructor">Instructor</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="professionalInfo.yearsOfExperience"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Years of Experience</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <FormControl>
+                  <Input {...field} type="email" placeholder="Enter your email" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="professionalInfo.languages"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Languages</FormLabel>
-              <div className="space-y-4">
-                {field.value?.map((lang: any, index: number) => (
-                  <Card key={index} className="p-4">
-                    <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name={`professionalInfo.languages.${index}.language`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Language</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input {...field} type="tel" placeholder="Enter your phone number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <FormField
-                        control={form.control}
-                        name={`professionalInfo.languages.${index}.proficiency`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Proficiency</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select proficiency" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="basic">Basic</SelectItem>
-                                <SelectItem value="intermediate">
-                                  Intermediate
-                                </SelectItem>
-                                <SelectItem value="fluent">Fluent</SelectItem>
-                                <SelectItem value="native">Native</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+          <FormField
+            control={form.control}
+            name="dateOfBirth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date of Birth</FormLabel>
+                <FormControl>
+                  <Input {...field} type="date" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          const languages = field.value?.filter(
-                            (_: any, i: number) => i !== index
-                          );
-                          field.onChange(languages);
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+          <FormField
+            control={form.control}
+            name="nationality"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nationality</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select nationality" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {/* Add nationality options */}
+                    <SelectItem value="us">United States</SelectItem>
+                    <SelectItem value="uk">United Kingdom</SelectItem>
+                    {/* Add more nationalities */}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    field.onChange([
-                      ...(field.value || []),
-                      { language: "", proficiency: "basic" },
-                    ]);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add Language
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Professional Bio</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Tell us about your professional background" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="Enter your address" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </TabsContent>
 
+      <TabsContent value="professional" className="space-y-6">
+        <div className="grid gap-6">
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Professional Role</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="yacht_owner">Yacht Owner</SelectItem>
+                    <SelectItem value="captain">Captain</SelectItem>
+                    <SelectItem value="crew">Crew Member</SelectItem>
+                    <SelectItem value="manager">Yacht Manager</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="experience.yearsOfExperience"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Years of Experience</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="experience.specialties"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Specialties</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Enter your specialties (comma-separated)"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="experience.languages"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Languages</FormLabel>
+                <div className="space-y-4">
+                  {field.value?.map((lang: any, index: number) => (
+                    <Card key={index} className="p-4">
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name={`experience.languages.${index}.language`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Language</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`experience.languages.${index}.proficiency`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Proficiency</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select proficiency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="basic">Basic</SelectItem>
+                                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                                  <SelectItem value="fluent">Fluent</SelectItem>
+                                  <SelectItem value="native">Native</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const languages = field.value?.filter(
+                              (_: any, i: number) => i !== index
+                            );
+                            field.onChange(languages);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      field.onChange([
+                        ...(field.value || []),
+                        { language: "", proficiency: "basic" },
+                      ]);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Language
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </TabsContent>
+      <TabsContent value="vessels" className="space-y-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Ship className="h-5 w-5 text-primary" />
+          <h3 className="font-medium">Yacht Details</h3>
+        </div>
+        <YachtDetailsForm form={form} />
+      </TabsContent>
       <TabsContent value="certifications" className="space-y-6">
         <FormField
           control={form.control}
@@ -316,6 +440,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
                           field.onChange(certs);
                         }}
                       >
+                        <Trash2 className="w-4 h-4 mr-2" />
                         Remove
                       </Button>
                     </div>
@@ -348,76 +473,6 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           )}
         />
       </TabsContent>
-
-      <TabsContent value="services" className="space-y-6">
-        <FormField
-          control={form.control}
-          name="serviceDescription"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Service Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Describe the services you offer"
-                  className="min-h-[150px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="serviceTypes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Service Types</FormLabel>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {field.value?.map((service: string, index: number) => (
-                  <Badge key={index} variant="secondary">
-                    {service}
-                    <button
-                      type="button"
-                      className="ml-1 hover:text-destructive"
-                      onClick={() => {
-                        const services = [...field.value];
-                        services.splice(index, 1);
-                        field.onChange(services);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <Select
-                onValueChange={(value) => {
-                  if (!field.value?.includes(value)) {
-                    field.onChange([...(field.value || []), value]);
-                  }
-                }}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Add service type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="yacht_charter">Yacht Charter</SelectItem>
-                  <SelectItem value="water_sports">Water Sports</SelectItem>
-                  <SelectItem value="sailing_lessons">Sailing Lessons</SelectItem>
-                  <SelectItem value="fishing_trips">Fishing Trips</SelectItem>
-                  <SelectItem value="special_events">Special Events</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </TabsContent>
-
       <TabsContent value="availability" className="space-y-6">
         <FormField
           control={form.control}
@@ -502,6 +557,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
                           field.onChange(schedules);
                         }}
                       >
+                        <Trash2 className="w-4 h-4 mr-2" />
                         Remove
                       </Button>
                     </div>
@@ -531,178 +587,7 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
           )}
         />
       </TabsContent>
-
-      <TabsContent value="yachts" className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Anchor className="h-5 w-5 text-primary" />
-          <h3 className="font-medium">Yacht Details</h3>
-        </div>
-        <YachtDetailsForm form={form} />
-      </TabsContent>
-
-      <TabsContent value="activities" className="space-y-6">
-        <ActivityDetailsForm form={form} />
-      </TabsContent>
-
-      <TabsContent value="insurance" className="space-y-6">
-        <FormField
-          control={form.control}
-          name="professionalInfo.insuranceInfo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Insurance Information</FormLabel>
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="professionalInfo.insuranceInfo.provider"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Insurance Provider</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="professionalInfo.insuranceInfo.policyNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Policy Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="professionalInfo.insuranceInfo.coverage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Coverage Details</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="professionalInfo.insuranceInfo.expiryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expiry Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </Card>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </TabsContent>
-
-      <TabsContent value="emergency" className="space-y-6">
-        <FormField
-          control={form.control}
-          name="emergencyContact"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emergency Contact</FormLabel>
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.relationship"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Relationship</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input type="tel" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </Card>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </TabsContent>
-
-      <TabsContent value="settings" className="space-y-6">
+      <TabsContent value="notifications" className="space-y-6">
         <FormField
           control={form.control}
           name="notificationPreferences"
@@ -813,7 +698,8 @@ export function ProducerProfileFields({ form }: ProducerProfileFieldsProps) {
             </FormItem>
           )}
         />
-
+      </TabsContent>
+      <TabsContent value="settings" className="space-y-6">
         <FormField
           control={form.control}
           name="privacySettings"

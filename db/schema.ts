@@ -15,7 +15,7 @@ export const users = pgTable("users", {
     enum: ["consumer", "producer", "partner", "admin"]
   }).notNull().default("consumer"),
 
-  // Firebase Cloud Messaging token
+  // Firebase Cloud Messaging token for notifications
   fcmToken: text("fcm_token"),
   fcmTokenLastUpdated: timestamp("fcm_token_last_updated"),
 
@@ -25,6 +25,20 @@ export const users = pgTable("users", {
   nationality: text("nationality"),
   preferredLanguage: text("preferred_language"),
   preferredCurrency: text("preferred_currency"),
+  bio: text("bio"),
+
+  // Contact Information
+  address: jsonb("address").$type<{
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  }>(),
 
   // Notification Settings
   notificationPreferences: jsonb("notification_preferences").$type<{
@@ -48,189 +62,28 @@ export const users = pgTable("users", {
     };
   }>(),
 
-  // Consumer Specific Fields
-  consumerProfile: jsonb("consumer_profile").$type<{
-    activityPreferences: string[];
-    dietaryRestrictions: string[];
-    accessibilityNeeds: string[];
-    favoriteDestinations: string[];
-    loyaltyProgram: {
-      tier: "bronze" | "silver" | "gold" | "platinum";
-      points: number;
-      rewardsHistory: Array<{
-        date: string;
-        description: string;
-        points: number;
-      }>;
-    };
-    bookingHistory: Array<{
-      bookingId: number;
-      date: string;
-      serviceType: string;
-      status: string;
-    }>;
-    paymentMethods: Array<{
-      type: string;
-      lastFour: string;
-      expiryDate: string;
-      isDefault: boolean;
-    }>;
-    billingAddress: {
+  // Privacy Settings
+  privacySettings: jsonb("privacy_settings").$type<{
+    profileVisibility: "public" | "private" | "registered" | "verified";
+    contactVisibility: "public" | "private" | "registered" | "verified";
+    servicesVisibility: "public" | "private" | "registered" | "verified";
+    portfolioVisibility: "public" | "private" | "registered" | "verified";
+    reviewsVisibility: "public" | "private" | "registered" | "verified";
+  }>(),
+
+  // Emergency Contact
+  emergencyContact: jsonb("emergency_contact").$type<{
+    name: string;
+    relationship: string;
+    phoneNumber: string;
+    email: string;
+    address: {
       street: string;
       city: string;
       state: string;
       country: string;
       postalCode: string;
     };
-  }>(),
-
-  // Producer Specific Fields
-  producerProfile: jsonb("producer_profile").$type<{
-    role: "yacht_owner" | "captain" | "facilitator";
-    certifications: Array<{
-      type: string;
-      name: string;
-      issuingAuthority: string;
-      issueDate: string;
-      expiryDate: string;
-      documentUrl: string;
-      verificationStatus: "pending" | "verified" | "expired";
-    }>;
-    yearsOfExperience: number;
-    languages: Array<{
-      language: string;
-      proficiency: "basic" | "intermediate" | "fluent" | "native";
-    }>;
-    yachtDetails: Array<{
-      name: string;
-      modelAndYear: string;
-      capacity: number;
-      features: {
-        interior: string[];
-        entertainment: string[];
-        outdoor: string[];
-        waterToys: string[];
-      };
-      technicalSpecs: {
-        length: number;
-        beam: number;
-        enginePower: string;
-        cruisingSpeed: number;
-        range: number;
-      };
-      safety: {
-        features: string[];
-        certifications: string[];
-      };
-      crew: Array<{
-        role: string;
-        expertise: string[];
-        services: string[];
-      }>;
-    }>;
-    activities: Array<{
-      type: string;
-      description: string;
-      equipment: string[];
-      safetyMeasures: string[];
-    }>;
-  }>(),
-
-  // Partner Specific Fields
-  partnerProfile: jsonb("partner_profile").$type<{
-    role: "chef" | "equipment_provider" | "music_group" | "restaurant" | "caterer";
-    specialties: string[];
-    certifications: Array<{
-      type: string;
-      name: string;
-      issuingAuthority: string;
-      issueDate: string;
-      expiryDate: string;
-      documentUrl: string;
-      verificationStatus: "pending" | "verified" | "expired";
-    }>;
-    services: Array<{
-      name: string;
-      description: string;
-      pricing: {
-        rate: number;
-        unit: "hour" | "day" | "event";
-      };
-      availability: boolean;
-    }>;
-    equipment: Array<{
-      name: string;
-      description: string;
-      quantity: number;
-      specifications: Record<string, string>;
-    }>;
-    menuOptions: Array<{
-      name: string;
-      description: string;
-      price: number;
-      dietaryInfo: string[];
-      minimumGuests: number;
-    }>;
-  }>(),
-
-  // Availability and Pricing
-  availability: jsonb("availability").$type<{
-    schedule: Array<{
-      day: string;
-      startTime: string;
-      endTime: string;
-    }>;
-    seasonalAvailability: {
-      summer: boolean;
-      winter: boolean;
-      spring: boolean;
-      fall: boolean;
-    };
-    pricing: {
-      baseRate: number;
-      unit: "hour" | "day" | "event";
-      seasonalRates: Array<{
-        season: string;
-        rate: number;
-        startDate: string;
-        endDate: string;
-      }>;
-    };
-    cancellationPolicy: {
-      type: "flexible" | "moderate" | "strict";
-      description: string;
-      refundPolicy: string;
-    };
-  }>(),
-
-  // Media Gallery
-  mediaGallery: jsonb("media_gallery").$type<{
-    photos: Array<{
-      url: string;
-      caption: string;
-      type: "profile" | "yacht_exterior" | "yacht_interior" | "activity" | "service";
-      isFeatured: boolean;
-    }>;
-    videos: Array<{
-      url: string;
-      title: string;
-      description: string;
-      thumbnail: string;
-    }>;
-  }>(),
-
-  privacySettings: jsonb("privacy_settings").$type<{
-    profileVisibility: "public" | "private" | "registered" | "verified";
-    contactInfoVisibility: "public" | "private" | "registered" | "verified";
-    galleryVisibility: "public" | "private" | "registered" | "verified";
-    reviewsVisibility: "public" | "private" | "registered" | "verified";
-  }>(),
-
-  emergencyContact: jsonb("emergency_contact").$type<{
-    name: string;
-    phoneNumber: string;
-    email: string;
-    relationship: string;
   }>(),
 
   verificationStatus: text("verification_status", {
@@ -241,6 +94,20 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Create schemas for users
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+export type InsertUser = typeof users.$inferInsert;
+export type SelectUser = typeof users.$inferSelect;
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  notifications: many(notifications),
+  bookings: many(bookings),
+  reviews: many(reviews),
+  activities: many(activities)
+}));
 
 // Notifications table enhanced for Firebase Cloud Messaging
 export const notifications = pgTable("notifications", {
@@ -289,6 +156,12 @@ export const notifications = pgTable("notifications", {
   deliveredAt: timestamp("delivered_at")
 });
 
+// Create schemas for notifications
+export const insertNotificationSchema = createInsertSchema(notifications);
+export const selectNotificationSchema = createSelectSchema(notifications);
+export type InsertNotification = typeof notifications.$inferInsert;
+export type SelectNotification = typeof notifications.$inferSelect;
+
 // Reviews table
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
@@ -303,6 +176,12 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Create schemas for reviews
+export const insertReviewSchema = createInsertSchema(reviews);
+export const selectReviewSchema = createSelectSchema(reviews);
+export type InsertReview = typeof reviews.$inferInsert;
+export type SelectReview = typeof reviews.$inferSelect;
 
 // Bookings table
 export const bookings = pgTable("bookings", {
@@ -324,6 +203,12 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Create schemas for bookings
+export const insertBookingSchema = createInsertSchema(bookings);
+export const selectBookingSchema = createSelectSchema(bookings);
+export type InsertBooking = typeof bookings.$inferInsert;
+export type SelectBooking = typeof bookings.$inferSelect;
 
 // Activities table for yacht-related activities
 export const activities = pgTable("activities", {
@@ -363,12 +248,11 @@ export const activities = pgTable("activities", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  notifications: many(notifications),
-  bookings: many(bookings),
-  reviews: many(reviews)
-}));
+// Create schemas for activities
+export const insertActivitySchema = createInsertSchema(activities);
+export const selectActivitySchema = createSelectSchema(activities);
+export type InsertActivity = typeof activities.$inferInsert;
+export type SelectActivity = typeof activities.$inferSelect;
 
 // Add relations for activities
 export const activitiesRelations = relations(activities, ({ one }) => ({
@@ -377,32 +261,3 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
-// Create schemas for notifications
-export const insertNotificationSchema = createInsertSchema(notifications);
-export const selectNotificationSchema = createSelectSchema(notifications);
-export type InsertNotification = typeof notifications.$inferInsert;
-export type SelectNotification = typeof notifications.$inferSelect;
-
-// Create schemas for activities
-export const insertActivitySchema = createInsertSchema(activities);
-export const selectActivitySchema = createSelectSchema(activities);
-export type InsertActivity = typeof activities.$inferInsert;
-export type SelectActivity = typeof activities.$inferSelect;
-
-
-// Schema exports
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-export type InsertUser = typeof users.$inferInsert;
-export type SelectUser = typeof users.$inferSelect;
-
-export const insertReviewSchema = createInsertSchema(reviews);
-export const selectReviewSchema = createSelectSchema(reviews);
-export type InsertReview = typeof reviews.$inferInsert;
-export type SelectReview = typeof reviews.$inferSelect;
-
-export const insertBookingSchema = createInsertSchema(bookings);
-export const selectBookingSchema = createSelectSchema(bookings);
-export type InsertBooking = typeof bookings.$inferInsert;
-export type SelectBooking = typeof bookings.$inferSelect;
